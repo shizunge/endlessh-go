@@ -10,6 +10,8 @@ import (
 	"os"
 	"sync/atomic"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 var (
@@ -39,7 +41,7 @@ type client struct {
 func NewClient(conn net.Conn, interval time.Duration, maxClient int64) *client {
 	atomic.AddInt64(&numCurrentClients, 1)
 	atomic.AddUint64(&numTotalClients, 1)
-	fmt.Printf("%v ACCEPT host=%v n=%v/%v\n", time.Now(), conn.RemoteAddr(), numCurrentClients, maxClient)
+	glog.V(1).Infof("ACCEPT host=%v n=%v/%v\n", conn.RemoteAddr(), numCurrentClients, maxClient)
 	return &client{
 		conn:       conn,
 		next:       time.Now().Add(interval),
@@ -61,7 +63,7 @@ func (c *client) Send(bannerMaxLength int64) error {
 
 func (c *client) Close() {
 	atomic.AddInt64(&numCurrentClients, -1)
-	fmt.Printf("%v CLOSE host=%v time=%v bytes=%v\n", time.Now(), c.conn.RemoteAddr(), time.Now().Sub(c.start), c.bytes_sent)
+	glog.V(1).Infof("CLOSE host=%v time=%v bytes=%v\n", c.conn.RemoteAddr(), time.Now().Sub(c.start), c.bytes_sent)
 	c.conn.Close()
 }
 
@@ -83,12 +85,12 @@ func main() {
 	// Listen for incoming connections.
 	l, err := net.Listen(*connType, *connHost+":"+*connPort)
 	if err != nil {
-		fmt.Println("Error listening:", err.Error())
+		glog.Errorf("Error listening: %v", err)
 		os.Exit(1)
 	}
 	// Close the listener when the application closes.
 	defer l.Close()
-	fmt.Println("Listening on " + *connHost + ":" + *connPort)
+	glog.Infof("Listening on %v:%v", *connHost, *connPort)
 
 	clients := make(chan *client, *maxClients)
 	go func(clients chan *client, interval time.Duration, bannerMaxLength int64) {
@@ -113,7 +115,7 @@ func main() {
 		// Listen for an incoming connection.
 		conn, err := l.Accept()
 		if err != nil {
-			fmt.Println("Error accepting: ", err.Error())
+			glog.Errorf("Error accepting: %v", err)
 			os.Exit(1)
 		}
 		// Handle connections in a new goroutine.
