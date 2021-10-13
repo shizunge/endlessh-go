@@ -63,7 +63,7 @@ func (c *client) Send(bannerMaxLength int64) error {
 
 func (c *client) Close() {
 	atomic.AddInt64(&numCurrentClients, -1)
-	glog.V(1).Infof("CLOSE host=%v time=%v bytes=%v\n", c.conn.RemoteAddr(), time.Now().Sub(c.start), c.bytes_sent)
+	glog.V(1).Infof("CLOSE host=%v time=%v bytes=%v\n", c.conn.RemoteAddr(), time.Now().Sub(c.start).Seconds(), c.bytes_sent)
 	c.conn.Close()
 }
 
