@@ -72,7 +72,7 @@ func main() {
 	bannerMaxLength := flag.Int64("line_length", 32, "Maximum banner line length")
 	maxClients := flag.Int64("max_clients", 4096, "Maximum number of clients")
 	connType := flag.String("conn_type", "tcp", "Connection type. Possible values are tcp, tcp4, tcp6")
-	connHost := flag.String("host", "localhost", "Listening address")
+	connHost := flag.String("host", "0.0.0.0", "Listening address")
 	connPort := flag.String("port", "2222", "Listening port")
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %v \n", os.Args[0])
