@@ -41,7 +41,8 @@ type client struct {
 func NewClient(conn net.Conn, interval time.Duration, maxClient int64) *client {
 	atomic.AddInt64(&numCurrentClients, 1)
 	atomic.AddUint64(&numTotalClients, 1)
-	glog.V(1).Infof("ACCEPT host=%v n=%v/%v\n", conn.RemoteAddr(), numCurrentClients, maxClient)
+	addr := conn.RemoteAddr().(*net.TCPAddr)
+	glog.V(1).Infof("ACCEPT host=%v port=%v n=%v/%v\n", addr.IP, addr.Port, numCurrentClients, maxClient)
 	return &client{
 		conn:       conn,
 		next:       time.Now().Add(interval),
@@ -63,7 +64,8 @@ func (c *client) Send(bannerMaxLength int64) error {
 
 func (c *client) Close() {
 	atomic.AddInt64(&numCurrentClients, -1)
-	glog.V(1).Infof("CLOSE host=%v time=%v bytes=%v\n", c.conn.RemoteAddr(), time.Now().Sub(c.start).Seconds(), c.bytes_sent)
+	addr := c.conn.RemoteAddr().(*net.TCPAddr)
+	glog.V(1).Infof("CLOSE host=%v port=%v time=%v bytes=%v\n", addr.IP, addr.Port, time.Now().Sub(c.start).Seconds(), c.bytes_sent)
 	c.conn.Close()
 }
 
@@ -83,6 +85,9 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	interval := time.Duration(*intervalMs) * time.Millisecond
 	// Listen for incoming connections.
+	if *connType == "tcp6" && *connHost == "0.0.0.0" {
+		*connHost = "[::]"
+	}
 	l, err := net.Listen(*connType, *connHost+":"+*connPort)
 	if err != nil {
 		glog.Errorf("Error listening: %v", err)
