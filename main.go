@@ -20,8 +20,10 @@ var (
 	numCurrentClients int64
 	totalClients      prometheus.Counter
 	totalBytes        prometheus.Counter
+	totalSeconds      prometheus.Counter
 	clientIP          *prometheus.CounterVec
 	clientBytes       *prometheus.CounterVec
+	clientSeconds     *prometheus.CounterVec
 )
 
 func main() {
@@ -39,34 +41,49 @@ func main() {
 
 	totalClients = prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: "total_clients",
+			Name: "endlessh_total_clients",
 			Help: "Total number of clients that tried to connect to this host.",
 		},
 	)
 	totalBytes = prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: "total_bytes",
+			Name: "endlessh_total_bytes",
 			Help: "Total bytes sent to clients that tried to connect to this host.",
+		},
+	)
+	totalSeconds = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "endlessh_total_seconds",
+			Help: "Total seconds clients spent on endlessh.",
 		},
 	)
 	clientIP = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "client_ip",
+			Name: "endlessh_client_ip_geo",
 			Help: "Number of connections of clients.",
 		},
 		[]string{"ip", "geohash", "location"},
 	)
 	clientBytes = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "client_bytes",
+			Name: "endlessh_client_bytes",
 			Help: "Number of bytes sent to client.",
+		},
+		[]string{"ip"},
+	)
+	clientSeconds = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "endlessh_client_seconds",
+			Help: "Seconds a client spends on endlessh.",
 		},
 		[]string{"ip"},
 	)
 	prometheus.MustRegister(totalClients)
 	prometheus.MustRegister(totalBytes)
+	prometheus.MustRegister(totalSeconds)
 	prometheus.MustRegister(clientIP)
 	prometheus.MustRegister(clientBytes)
+	prometheus.MustRegister(clientSeconds)
 	http.Handle("/metrics", promhttp.Handler())
 
 	rand.Seed(time.Now().UnixNano())

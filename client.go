@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -19,7 +20,7 @@ import (
 type GeoIP struct {
 	Ip          string  `json:""`
 	CountryCode string  `json:"country_code"`
-	CountryName string  `json:""`
+	CountryName string  `json:"country_name"`
 	RegionCode  string  `json:"region_code"`
 	RegionName  string  `json:"region_name"`
 	City        string  `json:"city"`
@@ -34,24 +35,27 @@ func getCode(address string) (string, string, error) {
 	var geo GeoIP
 	response, err := http.Get("https://freegeoip.live/json/" + address)
 	if err != nil {
-		return "", "Unknown", err
+		return "s000", "Unknown", err
 	}
 	defer response.Body.Close()
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return "", "Unknown", err
+		return "s000", "Unknown", err
 	}
 
 	err = json.Unmarshal(body, &geo)
 	if err != nil {
-		return "", "Unknown", err
+		return "s000", "Unknown", err
 	}
 
-	location := geo.City
-	if location == "" {
-		location = geo.CountryName
+	var locations []string
+	for _, s := range []string{geo.CountryName, geo.RegionName, geo.City} {
+		if strings.TrimSpace(s) != "" {
+			locations = append(locations, s)
+		}
 	}
+	location := strings.Join(locations, ", ")
 	if location == "" {
 		location = "Unknown"
 	}
@@ -73,6 +77,7 @@ func randStringBytes(n int64) []byte {
 
 type client struct {
 	conn       net.Conn
+	last       time.Time
 	next       time.Time
 	start      time.Time
 	bytes_sent int
@@ -93,6 +98,7 @@ func NewClient(conn net.Conn, interval time.Duration, maxClient int64) *client {
 	glog.V(1).Infof("ACCEPT host=%v port=%v n=%v/%v\n", addr.IP, addr.Port, numCurrentClients, maxClient)
 	return &client{
 		conn:       conn,
+		last:       time.Now(),
 		next:       time.Now().Add(interval),
 		start:      time.Now(),
 		bytes_sent: 0,
@@ -105,10 +111,14 @@ func (c *client) Send(bannerMaxLength int64) error {
 	if err != nil {
 		return err
 	}
-	c.bytes_sent += bytes_sent
 	addr := c.conn.RemoteAddr().(*net.TCPAddr)
+	secondsSpent := time.Now().Sub(c.last).Seconds()
+	c.bytes_sent += bytes_sent
+	c.last = time.Now()
 	totalBytes.Add(float64(bytes_sent))
+	totalSeconds.Add(secondsSpent)
 	clientBytes.With(prometheus.Labels{"ip": addr.IP.String()}).Add(float64(bytes_sent))
+	clientSeconds.With(prometheus.Labels{"ip": addr.IP.String()}).Add(secondsSpent)
 	return nil
 }
 
