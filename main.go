@@ -129,7 +129,6 @@ func main() {
 				c.Close()
 				continue
 			}
-			c.next = time.Now().Add(interval)
 			go func() { clients <- c }()
 		}
 	}(clients, interval, *bannerMaxLength)

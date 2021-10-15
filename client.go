@@ -84,6 +84,7 @@ type client struct {
 	last       time.Time
 	next       time.Time
 	start      time.Time
+	interval   time.Duration
 	geohash    string
 	country    string
 	location   string
@@ -109,6 +110,7 @@ func NewClient(conn net.Conn, interval time.Duration, maxClient int64) *client {
 		last:       time.Now(),
 		next:       time.Now().Add(interval),
 		start:      time.Now(),
+		interval:   interval,
 		geohash:    geohash,
 		country:    country,
 		location:   location,
@@ -117,18 +119,21 @@ func NewClient(conn net.Conn, interval time.Duration, maxClient int64) *client {
 }
 
 func (c *client) Send(bannerMaxLength int64) error {
+	defer func(c *client) {
+		addr := c.conn.RemoteAddr().(*net.TCPAddr)
+		secondsSpent := time.Now().Sub(c.last).Seconds()
+		c.last = time.Now()
+		c.next = time.Now().Add(c.interval)
+		totalSeconds.Add(secondsSpent)
+		clientSeconds.With(prometheus.Labels{"ip": addr.IP.String()}).Add(secondsSpent)
+	}(c)
 	length := rand.Int63n(bannerMaxLength)
 	bytes_sent, err := c.conn.Write(randStringBytes(length))
 	if err != nil {
 		return err
 	}
-	addr := c.conn.RemoteAddr().(*net.TCPAddr)
-	secondsSpent := time.Now().Sub(c.last).Seconds()
 	c.bytes_sent += bytes_sent
-	c.last = time.Now()
 	totalBytes.Add(float64(bytes_sent))
-	totalSeconds.Add(secondsSpent)
-	clientSeconds.With(prometheus.Labels{"ip": addr.IP.String()}).Add(secondsSpent)
 	return nil
 }
 
