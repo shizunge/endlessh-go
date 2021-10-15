@@ -17,7 +17,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type GeoIP struct {
+type geoIP struct {
 	Ip          string  `json:""`
 	CountryCode string  `json:"country_code"`
 	CountryName string  `json:"country_name"`
@@ -25,28 +25,28 @@ type GeoIP struct {
 	RegionName  string  `json:"region_name"`
 	City        string  `json:"city"`
 	Zipcode     string  `json:"zipcode"`
-	Lat         float64 `json:"latitude"`
-	Lon         float64 `json:"longitude"`
+	Latitude    float64 `json:"latitude"`
+	Longitude   float64 `json:"longitude"`
 	MetroCode   int     `json:"metro_code"`
 	AreaCode    int     `json:"area_code"`
 }
 
-func getCode(address string) (string, string, error) {
-	var geo GeoIP
+func getGeohashAndLocation(address string) (string, string, string, error) {
+	var geo geoIP
 	response, err := http.Get("https://freegeoip.live/json/" + address)
 	if err != nil {
-		return "s000", "Unknown", err
+		return "s000", "Unknown", "Unknown", err
 	}
 	defer response.Body.Close()
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return "s000", "Unknown", err
+		return "s000", "Unknown", "Unknown", err
 	}
 
 	err = json.Unmarshal(body, &geo)
 	if err != nil {
-		return "s000", "Unknown", err
+		return "s000", "Unknown", "Unknown", err
 	}
 
 	var locations []string
@@ -59,9 +59,13 @@ func getCode(address string) (string, string, error) {
 	if location == "" {
 		location = "Unknown"
 	}
-	gh := geohash.EncodeAuto(geo.Lat, geo.Lon)
+	country := geo.CountryName
+	if country == "" {
+		country = "Unknown"
+	}
+	gh := geohash.EncodeAuto(geo.Latitude, geo.Longitude)
 
-	return gh, location, nil
+	return gh, country, location, nil
 }
 
 var letterBytes = []byte(" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890!@#$%^&*()-=_+[]{}|;:',./<>?")
@@ -80,6 +84,9 @@ type client struct {
 	last       time.Time
 	next       time.Time
 	start      time.Time
+	geohash    string
+	country    string
+	location   string
 	bytes_sent int
 }
 
@@ -87,13 +94,14 @@ func NewClient(conn net.Conn, interval time.Duration, maxClient int64) *client {
 	addr := conn.RemoteAddr().(*net.TCPAddr)
 	atomic.AddInt64(&numCurrentClients, 1)
 	totalClients.Inc()
-	geohash, location, err := getCode(addr.IP.String())
+	geohash, country, location, err := getGeohashAndLocation(addr.IP.String())
 	if err != nil {
 		glog.Warningf("Failed to obatin the geohash of %v.", addr.IP)
 	}
 	clientIP.With(prometheus.Labels{
 		"ip":       addr.IP.String(),
 		"geohash":  geohash,
+		"country":  country,
 		"location": location}).Inc()
 	glog.V(1).Infof("ACCEPT host=%v port=%v n=%v/%v\n", addr.IP, addr.Port, numCurrentClients, maxClient)
 	return &client{
@@ -101,6 +109,9 @@ func NewClient(conn net.Conn, interval time.Duration, maxClient int64) *client {
 		last:       time.Now(),
 		next:       time.Now().Add(interval),
 		start:      time.Now(),
+		geohash:    geohash,
+		country:    country,
+		location:   location,
 		bytes_sent: 0,
 	}
 }
@@ -117,7 +128,6 @@ func (c *client) Send(bannerMaxLength int64) error {
 	c.last = time.Now()
 	totalBytes.Add(float64(bytes_sent))
 	totalSeconds.Add(secondsSpent)
-	clientBytes.With(prometheus.Labels{"ip": addr.IP.String()}).Add(float64(bytes_sent))
 	clientSeconds.With(prometheus.Labels{"ip": addr.IP.String()}).Add(secondsSpent)
 	return nil
 }
@@ -125,6 +135,7 @@ func (c *client) Send(bannerMaxLength int64) error {
 func (c *client) Close() {
 	addr := c.conn.RemoteAddr().(*net.TCPAddr)
 	atomic.AddInt64(&numCurrentClients, -1)
+	totalClientsClosed.Inc()
 	glog.V(1).Infof("CLOSE host=%v port=%v time=%v bytes=%v\n", addr.IP, addr.Port, time.Now().Sub(c.start).Seconds(), c.bytes_sent)
 	c.conn.Close()
 }

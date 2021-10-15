@@ -3,7 +3,7 @@ FROM golang:alpine AS build
 ADD . /go/src/app
 WORKDIR /go/src/app
 RUN go generate
-RUN go build -o endlessh main.go client.go
+RUN go build -o endlessh .
 
 FROM alpine:latest
 
