@@ -94,7 +94,7 @@ type client struct {
 func NewClient(conn net.Conn, interval time.Duration, maxClient int64) *client {
 	addr := conn.RemoteAddr().(*net.TCPAddr)
 	atomic.AddInt64(&numCurrentClients, 1)
-	totalClients.Inc()
+	atomic.AddInt64(&numTotalClients, 1)
 	geohash, country, location, err := getGeohashAndLocation(addr.IP.String())
 	if err != nil {
 		glog.Warningf("Failed to obatin the geohash of %v.", addr.IP)
@@ -121,11 +121,11 @@ func NewClient(conn net.Conn, interval time.Duration, maxClient int64) *client {
 func (c *client) Send(bannerMaxLength int64) error {
 	defer func(c *client) {
 		addr := c.conn.RemoteAddr().(*net.TCPAddr)
-		secondsSpent := time.Now().Sub(c.last).Seconds()
+		millisecondsSpent := time.Now().Sub(c.last).Milliseconds()
 		c.last = time.Now()
 		c.next = time.Now().Add(c.interval)
-		totalSeconds.Add(secondsSpent)
-		clientSeconds.With(prometheus.Labels{"ip": addr.IP.String()}).Add(secondsSpent)
+		atomic.AddInt64(&numTotalMilliseconds, millisecondsSpent)
+		clientSeconds.With(prometheus.Labels{"ip": addr.IP.String()}).Add(float64(millisecondsSpent) / 1000)
 	}(c)
 	length := rand.Int63n(bannerMaxLength)
 	bytes_sent, err := c.conn.Write(randStringBytes(length))
@@ -133,14 +133,14 @@ func (c *client) Send(bannerMaxLength int64) error {
 		return err
 	}
 	c.bytes_sent += bytes_sent
-	totalBytes.Add(float64(bytes_sent))
+	atomic.AddInt64(&numTotalBytes, int64(bytes_sent))
 	return nil
 }
 
 func (c *client) Close() {
 	addr := c.conn.RemoteAddr().(*net.TCPAddr)
 	atomic.AddInt64(&numCurrentClients, -1)
-	totalClientsClosed.Inc()
+	atomic.AddInt64(&numTotalClientsClosed, 1)
 	glog.V(1).Infof("CLOSE host=%v port=%v time=%v bytes=%v\n", addr.IP, addr.Port, time.Now().Sub(c.start).Seconds(), c.bytes_sent)
 	c.conn.Close()
 }

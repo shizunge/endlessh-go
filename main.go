@@ -17,50 +17,62 @@ import (
 )
 
 var (
-	numCurrentClients  int64
-	totalClients       prometheus.Counter
-	totalClientsClosed prometheus.Counter
-	totalBytes         prometheus.Counter
-	totalSeconds       prometheus.Counter
-	clientIP           *prometheus.CounterVec
-	clientSeconds      *prometheus.CounterVec
+	numCurrentClients     int64
+	numTotalClients       int64
+	numTotalClientsClosed int64
+	numTotalBytes         int64
+	numTotalMilliseconds  int64
+	totalClients          prometheus.CounterFunc
+	totalClientsClosed    prometheus.CounterFunc
+	totalBytes            prometheus.CounterFunc
+	totalSeconds          prometheus.CounterFunc
+	clientIP              *prometheus.CounterVec
+	clientSeconds         *prometheus.CounterVec
 )
 
 func initPrometheus(connHost, prometheusPort, prometheusEntry string) {
-	totalClients = prometheus.NewCounter(
+	totalClients = prometheus.NewCounterFunc(
 		prometheus.CounterOpts{
-			Name: "endlessh_total_clients",
+			Name: "endlessh_client_open_count_total",
 			Help: "Total number of clients that tried to connect to this host.",
+		}, func() float64 {
+			return float64(numTotalClients)
 		},
 	)
-	totalClientsClosed = prometheus.NewCounter(
+	totalClientsClosed = prometheus.NewCounterFunc(
 		prometheus.CounterOpts{
-			Name: "endlessh_total_clients_closed",
+			Name: "endlessh_client_closed_count_total",
 			Help: "Total number of clients that stopped connecting to this host.",
+		}, func() float64 {
+			return float64(numTotalClientsClosed)
 		},
 	)
-	totalBytes = prometheus.NewCounter(
+	totalBytes = prometheus.NewCounterFunc(
 		prometheus.CounterOpts{
-			Name: "endlessh_total_bytes",
+			Name: "endlessh_sent_bytes_total",
 			Help: "Total bytes sent to clients that tried to connect to this host.",
+		}, func() float64 {
+			return float64(numTotalBytes)
 		},
 	)
-	totalSeconds = prometheus.NewCounter(
+	totalSeconds = prometheus.NewCounterFunc(
 		prometheus.CounterOpts{
-			Name: "endlessh_total_seconds",
+			Name: "endlessh_trapped_time_seconds_total",
 			Help: "Total seconds clients spent on endlessh.",
+		}, func() float64 {
+			return float64(numTotalMilliseconds) / 1000
 		},
 	)
 	clientIP = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "endlessh_client_ip_geo",
+			Name: "endlessh_client_open_count",
 			Help: "Number of connections of clients.",
 		},
 		[]string{"ip", "geohash", "country", "location"},
 	)
 	clientSeconds = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "endlessh_client_seconds",
+			Name: "endlessh_client_trapped_time_seconds",
 			Help: "Seconds a client spends on endlessh.",
 		},
 		[]string{"ip"},
@@ -73,7 +85,7 @@ func initPrometheus(connHost, prometheusPort, prometheusEntry string) {
 	prometheus.MustRegister(clientSeconds)
 	http.Handle("/"+prometheusEntry, promhttp.Handler())
 	go func() {
-		glog.Infof("Listening HTTP on %v:%v", connHost, prometheusPort)
+		glog.Infof("Starting Prometheus on %v:%v, entry point is /%v", connHost, prometheusPort, prometheusEntry)
 		http.ListenAndServe(connHost+":"+prometheusPort, nil)
 	}()
 }
