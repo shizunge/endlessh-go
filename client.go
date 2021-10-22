@@ -97,7 +97,7 @@ func NewClient(conn net.Conn, interval time.Duration, maxClient int64) *client {
 	atomic.AddInt64(&numTotalClients, 1)
 	geohash, country, location, err := getGeohashAndLocation(addr.IP.String())
 	if err != nil {
-		glog.Warningf("Failed to obatin the geohash of %v.", addr.IP)
+		glog.Warningf("Failed to obatin the geohash of %v: %v.", addr.IP, err)
 	}
 	clientIP.With(prometheus.Labels{
 		"ip":       addr.IP.String(),
