@@ -1,72 +1,14 @@
 package main
 
-//  echo -n "test out the server" | nc localhost 3333
-
 import (
-	"encoding/json"
-	"io/ioutil"
 	"math/rand"
 	"net"
-	"net/http"
-	"strings"
 	"sync/atomic"
 	"time"
 
 	"github.com/golang/glog"
-	"github.com/pierrre/geohash"
 	"github.com/prometheus/client_golang/prometheus"
 )
-
-type geoIP struct {
-	Ip          string  `json:""`
-	CountryCode string  `json:"country_code"`
-	CountryName string  `json:"country_name"`
-	RegionCode  string  `json:"region_code"`
-	RegionName  string  `json:"region_name"`
-	City        string  `json:"city"`
-	Zipcode     string  `json:"zipcode"`
-	Latitude    float64 `json:"latitude"`
-	Longitude   float64 `json:"longitude"`
-	MetroCode   int     `json:"metro_code"`
-	AreaCode    int     `json:"area_code"`
-}
-
-func getGeohashAndLocation(address string) (string, string, string, error) {
-	var geo geoIP
-	response, err := http.Get("https://freegeoip.live/json/" + address)
-	if err != nil {
-		return "s000", "Unknown", "Unknown", err
-	}
-	defer response.Body.Close()
-
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return "s000", "Unknown", "Unknown", err
-	}
-
-	err = json.Unmarshal(body, &geo)
-	if err != nil {
-		return "s000", "Unknown", "Unknown", err
-	}
-
-	var locations []string
-	for _, s := range []string{geo.CountryName, geo.RegionName, geo.City} {
-		if strings.TrimSpace(s) != "" {
-			locations = append(locations, s)
-		}
-	}
-	location := strings.Join(locations, ", ")
-	if location == "" {
-		location = "Unknown"
-	}
-	country := geo.CountryName
-	if country == "" {
-		country = "Unknown"
-	}
-	gh := geohash.EncodeAuto(geo.Latitude, geo.Longitude)
-
-	return gh, country, location, nil
-}
 
 var letterBytes = []byte(" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890!@#$%^&*()-=_+[]{}|;:',./<>?")
 
@@ -80,22 +22,23 @@ func randStringBytes(n int64) []byte {
 }
 
 type client struct {
-	conn       net.Conn
-	last       time.Time
-	next       time.Time
-	start      time.Time
-	interval   time.Duration
-	geohash    string
-	country    string
-	location   string
-	bytes_sent int
+	conn          net.Conn
+	last          time.Time
+	next          time.Time
+	start         time.Time
+	interval      time.Duration
+	geoipSupplier string
+	geohash       string
+	country       string
+	location      string
+	bytes_sent    int
 }
 
-func NewClient(conn net.Conn, interval time.Duration, maxClient int64) *client {
+func NewClient(conn net.Conn, interval time.Duration, maxClient int64, geoipSupplier string) *client {
 	addr := conn.RemoteAddr().(*net.TCPAddr)
 	atomic.AddInt64(&numCurrentClients, 1)
 	atomic.AddInt64(&numTotalClients, 1)
-	geohash, country, location, err := getGeohashAndLocation(addr.IP.String())
+	geohash, country, location, err := geohashAndLocation(addr.IP.String(), geoipSupplier)
 	if err != nil {
 		glog.Warningf("Failed to obatin the geohash of %v: %v.", addr.IP, err)
 	}

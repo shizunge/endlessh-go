@@ -1,7 +1,5 @@
 package main
 
-//  echo -n "test out the server" | nc localhost 3333
-
 import (
 	"flag"
 	"fmt"
@@ -100,6 +98,7 @@ func main() {
 	enablePrometheus := flag.Bool("enable_prometheus", false, "Enable prometheus")
 	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
 	prometheusEntry := flag.String("prometheus_entry", "metrics", "Entry point for prometheus")
+	geoipSupplier := flag.String("geoip_supplier", "ip-api", "Supplier to obtain Geohash of IPs. Possible values are \"ip-api\", \"freegeoip\"")
 
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %v \n", os.Args[0])
@@ -127,7 +126,7 @@ func main() {
 	glog.Infof("Listening on %v:%v", *connHost, *connPort)
 
 	clients := make(chan *client, *maxClients)
-	go func(clients chan *client, interval time.Duration, bannerMaxLength int64) {
+	go func() {
 		for {
 			c, more := <-clients
 			if !more {
@@ -136,15 +135,15 @@ func main() {
 			if time.Now().Before(c.next) {
 				time.Sleep(c.next.Sub(time.Now()))
 			}
-			err := c.Send(bannerMaxLength)
+			err := c.Send(*bannerMaxLength)
 			if err != nil {
 				c.Close()
 				continue
 			}
 			go func() { clients <- c }()
 		}
-	}(clients, interval, *bannerMaxLength)
-	listener := func(clients chan *client, interval time.Duration, maxClients int64) {
+	}()
+	listener := func() {
 		for {
 			// Listen for an incoming connection.
 			conn, err := l.Accept()
@@ -153,11 +152,11 @@ func main() {
 				os.Exit(1)
 			}
 			// Handle connections in a new goroutine.
-			for numCurrentClients >= maxClients {
+			for numCurrentClients >= *maxClients {
 				time.Sleep(interval)
 			}
-			clients <- NewClient(conn, interval, maxClients)
+			clients <- NewClient(conn, interval, *maxClients, *geoipSupplier)
 		}
 	}
-	listener(clients, interval, *maxClients)
+	listener()
 }
