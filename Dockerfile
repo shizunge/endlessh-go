@@ -2,7 +2,7 @@ FROM golang:alpine AS build
 
 ADD . /go/src/app
 WORKDIR /go/src/app
-RUN go generate
+RUN go mod tidy
 RUN go build -o endlessh .
 
 FROM alpine:latest
