@@ -118,6 +118,8 @@ func geohashAndLocationFromIpapi(address string) (string, string, string, error)
 
 func geohashAndLocation(address string, geoipSupplier string) (string, string, string, error) {
 	switch geoipSupplier {
+	case "off":
+		return "s000", "Geohash off", "Geohash off", nil
 	case "ip-api":
 		return geohashAndLocationFromIpapi(address)
 	case "freegeoip":
