@@ -20,7 +20,7 @@ go build .
 Alternatively, you can use the [docker image](https://hub.docker.com/r/shizunge/endlessh-go):
 
 ```
-sudo docker run -d -p 2222:2222 shizunge/endlessh-go
+sudo docker run -d -p 2222:2222 shizunge/endlessh-go -logtostderr -v=1
 ```
 
 It listens to port `2222` by default.
@@ -31,7 +31,7 @@ Then you can try to connect to the endlessh server. Your SSH client should hang 
 ssh -p 2222 localhost
 ```
 
-If you want log like the [C implementation](https://github.com/skeeto/endlessh), you need to set both CLI arguments `-logtostderr` and `-v=1`, then the log will go to the stderr. You can set different log destinations via CLI arguments.
+If you want log like the [C implementation](https://github.com/skeeto/endlessh), you need to set both CLI arguments `-logtostderr` and `-v=1`, then the log will go to stderr. You can set different log destinations via CLI arguments.
 
 ## Usage
 
