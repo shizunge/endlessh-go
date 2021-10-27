@@ -17,7 +17,7 @@ jobs:
         with:
           version: latest
       - name: build the image
-      run: |
-        docker buildx build --push \
-          --tag shizunge/endlessh-go:latest \
-          --platform linux/amd64,linux/arm/v7,linux/arm64 .
+        run: |
+          docker buildx build --push \
+            --tag shizunge/endlessh-go:latest \
+            --platform linux/amd64,linux/arm/v7,linux/arm64 .
