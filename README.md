@@ -1,10 +1,10 @@
 # endlessh-go
 
-Golang implementation of [endlessh](https://nullprogram.com/blog/2019/03/22/) exporting Prometheus metrics.
+A golang implementation of [endlessh](https://nullprogram.com/blog/2019/03/22/) exporting Prometheus metrics, visualized by a Grafana dashboard.
 
 ## Introduction
 
-Endlessh is a great idea that not only blocks the brute force SSH attacks, but also wastes attackers time as a kind of counter-attack. Besides trapping the attackers, I also want to virtualize the Geolocations and other statistics of the sources of attacks. Unfortunately the wonderful [C implementation of endlessh](https://github.com/skeeto/endlessh) only provides text based log, but I do not like the solution that writing extra scripts to parse the log outputs, then exporting the results to a dashboard, because it would introduce extra layers in my current setup and it would depend on the format of the text log file rather than some structured data. Thus I create this golang implementation of endlessh to export [Prometheus](https://prometheus.io/) metrics and a [Grafana](https://grafana.com/) dashboard to virtualize them.
+Endlessh is a great idea that not only blocks the brute force SSH attacks, but also wastes attackers time as a kind of counter-attack. Besides trapping the attackers, I also want to visualize the Geolocations and other statistics of the sources of attacks. Unfortunately the wonderful original [C implementation of endlessh](https://github.com/skeeto/endlessh) only provides text based log, but I do not like the solution that writing extra scripts to parse the log outputs, then exporting the results to a dashboard, because it would introduce extra layers in my current setup and it would depend on the format of the text log file rather than some structured data. Thus I create this golang implementation of endlessh to export [Prometheus](https://prometheus.io/) metrics and a [Grafana](https://grafana.com/) dashboard to visualize them.
 
 If you want a dashboard of sources of attacks and do not mind the endlessh server, besides trapping the attackers, does extra things including: translating IP to Geohash, exporting Prometheus metrics, and using more memory (about 10MB), this is the solution for you.
 
@@ -76,8 +76,8 @@ This golang implementation exports the following Prometheus metrics.
 | endlessh_client_closed_count_total   | count | Total number of clients that stopped connecting to this host. |
 | endlessh_sent_bytes_total            | count | Total bytes sent to clients that tried to connect to this host. |
 | endlessh_trapped_time_seconds_total  | count | Total seconds clients spent on endlessh. |
-| endlessh_client_open_count           | count | Number of connections of clients. <br> Labals: <br> <ul><li> `ip`: IP of the client </li> <li>  `country`: Country of the IP </li> <li>  `location`: Country, Region, and City </li> <li>  `geohash`: Geohash of the location </li></ul> |
-| endlessh_client_trapped_time_seconds | count | Seconds a client spends on endlessh. <br> Labals: <br> <ul><li>  `ip`: IP of the client </li></ul> |
+| endlessh_client_open_count           | count | Number of connections of clients. <br> Labels: <br> <ul><li> `ip`: IP of the client </li> <li>  `country`: Country of the IP </li> <li>  `location`: Country, Region, and City </li> <li>  `geohash`: Geohash of the location </li></ul> |
+| endlessh_client_trapped_time_seconds | count | Seconds a client spends on endlessh. <br> Labels: <br> <ul><li>  `ip`: IP of the client </li></ul> |
 
 The metrics is off by default, you can turn it via the CLI argument `-enable_prometheus`.
 
