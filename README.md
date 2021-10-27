@@ -2,9 +2,9 @@
 
 Golang implementation of [endlessh](https://nullprogram.com/blog/2019/03/22/).
 
-## Purpose
+## Introduction
 
-Endlessh is a great idea that not only blocks the brute force SSH attackers, but also wastes their time that I consider as a kind of counter-attack. Besides trapping the attackers, I also want to virtualize the Geolocations and other statistics of the sources of attacks. Unfortunately the wonderful [C implementation of endlessh](https://github.com/skeeto/endlessh) only provides text based log, but I do not like the solution that writing extra scripts to parse the log outputs, then exporting the results to a dashboard, which would introduce extra layers in my current setup and would depend on the format of the text log file rather than some structured data. Thus I create this golang implementation of endlessh to export [Prometheus](https://prometheus.io/) metrics and a [Grafana](https://grafana.com/) dashboard to virtualize them.
+Endlessh is a great idea that not only blocks the brute force SSH attacks, but also wastes attackers time as a kind of counter-attack. Besides trapping the attackers, I also want to virtualize the Geolocations and other statistics of the sources of attacks. Unfortunately the wonderful [C implementation of endlessh](https://github.com/skeeto/endlessh) only provides text based log, but I do not like the solution that writing extra scripts to parse the log outputs, then exporting the results to a dashboard, because it would introduce extra layers in my current setup and it would depend on the format of the text log file rather than some structured data. Thus I create this golang implementation of endlessh to export [Prometheus](https://prometheus.io/) metrics and a [Grafana](https://grafana.com/) dashboard to virtualize them.
 
 If you do not mind the endlessh server, besides trapping the attackers, does extra things including
 
@@ -14,6 +14,20 @@ If you do not mind the endlessh server, besides trapping the attackers, does ext
 
 and want a dashboard of sources of attacks, this is the solution for you.
 
+## Quick Start
+
+Clone the repo then build from source:
+
+```
+$ go build .
+$ ./endlessh-go
+```
+
+Alternatively, you can use docker:
+
+```
+$ sudo docker run -d shizunge/endlessh-go
+```
 
 ## Usage
 
@@ -71,3 +85,10 @@ The metrics is off by default, you can turn it via the CLI argument `-enable_pro
 
 The endlessh-go server stores the geohash of attackers as a label on `endlessh_client_open_count`, which is also off by default. You can turn it on via the CLI argument `-geoip_supplier`. The endlessh-go uses service from either [ip-api](https://ip-api.com/) or [freegeoip](https://freegeoip.live/), which may enforce a query rate and limit commercial use. Visit their website for their terms and policies.
 
+## Dashboard
+
+![screenshot](dashboard/screenshot.png)
+
+The dashboard requires Grafana 8.2, and use prometheus as data source.
+
+You can import the dashboard from Grafana.com using ID [15156](https://grafana.com/grafana/dashboards/15156)
