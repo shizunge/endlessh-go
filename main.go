@@ -1,3 +1,19 @@
+// Copyright (C) 2021 Shizun Ge
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+//
+
 package main
 
 import (
@@ -95,10 +111,10 @@ func main() {
 	connType := flag.String("conn_type", "tcp", "Connection type. Possible values are tcp, tcp4, tcp6")
 	connHost := flag.String("host", "0.0.0.0", "Listening address")
 	connPort := flag.String("port", "2222", "Listening port")
-	enablePrometheus := flag.Bool("enable_prometheus", false, "Enable prometheus")
+	prometheusEnabled := flag.Bool("enable_prometheus", false, "Enable prometheus")
 	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
 	prometheusEntry := flag.String("prometheus_entry", "metrics", "Entry point for prometheus")
-	geoipSupplier := flag.String("geoip_supplier", "ip-api", "Supplier to obtain Geohash of IPs. Possible values are \"ip-api\", \"freegeoip\"")
+	geoipSupplier := flag.String("geoip_supplier", "off", "Supplier to obtain Geohash of IPs. Possible values are \"off\", \"ip-api\", \"freegeoip\"")
 
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %v \n", os.Args[0])
@@ -106,7 +122,7 @@ func main() {
 	}
 	flag.Parse()
 
-	if *enablePrometheus {
+	if *prometheusEnabled {
 		initPrometheus(*connHost, *prometheusPort, *prometheusEntry)
 	}
 
@@ -155,7 +171,7 @@ func main() {
 			for numCurrentClients >= *maxClients {
 				time.Sleep(interval)
 			}
-			clients <- NewClient(conn, interval, *maxClients, *geoipSupplier)
+			clients <- NewClient(conn, interval, *maxClients, *geoipSupplier, *prometheusEnabled)
 		}
 	}
 	listener()

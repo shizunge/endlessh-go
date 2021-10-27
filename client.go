@@ -38,19 +38,20 @@ func randStringBytes(n int64) []byte {
 }
 
 type client struct {
-	conn          net.Conn
-	last          time.Time
-	next          time.Time
-	start         time.Time
-	interval      time.Duration
-	geoipSupplier string
-	geohash       string
-	country       string
-	location      string
-	bytes_sent    int
+	conn              net.Conn
+	last              time.Time
+	next              time.Time
+	start             time.Time
+	interval          time.Duration
+	geoipSupplier     string
+	geohash           string
+	country           string
+	location          string
+	bytesSent         int
+	prometheusEnabled bool
 }
 
-func NewClient(conn net.Conn, interval time.Duration, maxClient int64, geoipSupplier string) *client {
+func NewClient(conn net.Conn, interval time.Duration, maxClient int64, geoipSupplier string, prometheusEnabled bool) *client {
 	addr := conn.RemoteAddr().(*net.TCPAddr)
 	atomic.AddInt64(&numCurrentClients, 1)
 	atomic.AddInt64(&numTotalClients, 1)
@@ -58,22 +59,25 @@ func NewClient(conn net.Conn, interval time.Duration, maxClient int64, geoipSupp
 	if err != nil {
 		glog.Warningf("Failed to obatin the geohash of %v: %v.", addr.IP, err)
 	}
-	clientIP.With(prometheus.Labels{
-		"ip":       addr.IP.String(),
-		"geohash":  geohash,
-		"country":  country,
-		"location": location}).Inc()
+	if prometheusEnabled {
+		clientIP.With(prometheus.Labels{
+			"ip":       addr.IP.String(),
+			"geohash":  geohash,
+			"country":  country,
+			"location": location}).Inc()
+	}
 	glog.V(1).Infof("ACCEPT host=%v port=%v n=%v/%v\n", addr.IP, addr.Port, numCurrentClients, maxClient)
 	return &client{
-		conn:       conn,
-		last:       time.Now(),
-		next:       time.Now().Add(interval),
-		start:      time.Now(),
-		interval:   interval,
-		geohash:    geohash,
-		country:    country,
-		location:   location,
-		bytes_sent: 0,
+		conn:              conn,
+		last:              time.Now(),
+		next:              time.Now().Add(interval),
+		start:             time.Now(),
+		interval:          interval,
+		geohash:           geohash,
+		country:           country,
+		location:          location,
+		bytesSent:         0,
+		prometheusEnabled: prometheusEnabled,
 	}
 }
 
@@ -84,15 +88,17 @@ func (c *client) Send(bannerMaxLength int64) error {
 		c.last = time.Now()
 		c.next = time.Now().Add(c.interval)
 		atomic.AddInt64(&numTotalMilliseconds, millisecondsSpent)
-		clientSeconds.With(prometheus.Labels{"ip": addr.IP.String()}).Add(float64(millisecondsSpent) / 1000)
+		if c.prometheusEnabled {
+			clientSeconds.With(prometheus.Labels{"ip": addr.IP.String()}).Add(float64(millisecondsSpent) / 1000)
+		}
 	}(c)
 	length := rand.Int63n(bannerMaxLength)
-	bytes_sent, err := c.conn.Write(randStringBytes(length))
+	bytesSent, err := c.conn.Write(randStringBytes(length))
 	if err != nil {
 		return err
 	}
-	c.bytes_sent += bytes_sent
-	atomic.AddInt64(&numTotalBytes, int64(bytes_sent))
+	c.bytesSent += bytesSent
+	atomic.AddInt64(&numTotalBytes, int64(bytesSent))
 	return nil
 }
 
@@ -100,6 +106,6 @@ func (c *client) Close() {
 	addr := c.conn.RemoteAddr().(*net.TCPAddr)
 	atomic.AddInt64(&numCurrentClients, -1)
 	atomic.AddInt64(&numTotalClientsClosed, 1)
-	glog.V(1).Infof("CLOSE host=%v port=%v time=%v bytes=%v\n", addr.IP, addr.Port, time.Now().Sub(c.start).Seconds(), c.bytes_sent)
+	glog.V(1).Infof("CLOSE host=%v port=%v time=%v bytes=%v\n", addr.IP, addr.Port, time.Now().Sub(c.start).Seconds(), c.bytesSent)
 	c.conn.Close()
 }
