@@ -1,9 +1,9 @@
 name: build docker image and push to docker hub
 
 on:
-  push:
-    tags:
-      - '*'
+  release:
+    types: # This configuration does not affect the page_build event above
+      - created
 
 jobs:
   build:
