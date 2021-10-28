@@ -33,7 +33,7 @@ ssh -p 2222 localhost
 
 If you want log like the [C implementation](https://github.com/skeeto/endlessh), you need to set both CLI arguments `-logtostderr` and `-v=1`, then the log will go to stderr. You can set different log destinations via CLI arguments.
 
-Also check out [examples](./examples/examples.md).
+Also check out [examples](./examples/README.md).
 
 ## Usage
 
