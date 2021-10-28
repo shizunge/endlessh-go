@@ -308,7 +308,7 @@
       "type": "stat"
     },
     {
-      "datasource": null,
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -619,7 +619,7 @@
       "type": "stat"
     },
     {
-      "datasource": null,
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -679,7 +679,7 @@
           "expr": "(endlessh_client_open_count_total{instance=\"$host\",job=\"$job\"}) - (endlessh_client_closed_count_total{instance=\"$host\",job=\"$job\"} offset $__interval  or endlessh_client_open_count_total{instance=\"$host\",job=\"$job\"} * 0)",
           "instant": false,
           "interval": "",
-          "legendFormat": "Current Open Connections",
+          "legendFormat": "Open Connections",
           "refId": "current_open"
         }
       ],
@@ -1131,7 +1131,7 @@
       "type": "geomap"
     },
     {
-      "datasource": null,
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1427,5 +1427,5 @@
   "timezone": "",
   "title": "Endlessh",
   "uid": "ATIxYkO7k",
-  "version": 292
+  "version": 2
 }

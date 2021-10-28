@@ -33,6 +33,8 @@ ssh -p 2222 localhost
 
 If you want log like the [C implementation](https://github.com/skeeto/endlessh), you need to set both CLI arguments `-logtostderr` and `-v=1`, then the log will go to stderr. You can set different log destinations via CLI arguments.
 
+Also check out [examples](./examples/examples.md).
+
 ## Usage
 
 Usage of `./endlessh-go`
@@ -74,7 +76,7 @@ Usage of `./endlessh-go`
 
 ## Metrics
 
-This golang implementation exports the following Prometheus metrics.
+Endlessh-go exports the following Prometheus metrics.
 
 | Metric                               | Type  | Description  |
 |--------------------------------------|-------|--------------|
@@ -98,5 +100,7 @@ The endlessh-go server stores the geohash of attackers as a label on `endlessh_c
 The dashboard requires Grafana 8.2.
 
 You can import the dashboard from Grafana.com using ID [15156](https://grafana.com/grafana/dashboards/15156)
+
+The dashboard visualizes data for the selected time range.
 
 The IP addresses are clickable and link you to the [ARIN](https://www.arin.net/) database.

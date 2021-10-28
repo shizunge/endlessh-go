@@ -50,7 +50,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=examples
     volumes:
       - grafana_var:/var/lib/grafana/
-      - grafana_etc:/etc/grafana/
+      - ./grafana-datasource.yml:/etc/grafana/provisioning/datasources/prometheus.yml
 
 networks:
   example_network:
@@ -58,4 +58,3 @@ networks:
 volumes:
   prometheus:
   grafana_var:
-  grafana_etc:
