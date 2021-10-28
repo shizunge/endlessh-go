@@ -16,7 +16,7 @@ services:
       # SSH port
       - 2222:2222
       # Prometheus metrics port
-      - 2112:2112
+      - 127.0.0.1:2112:2112
 
   prometheus:
     image: prom/prometheus:latest
@@ -32,7 +32,7 @@ services:
     networks:
       - example_network
     ports:
-      - 9090:9090
+      - 127.0.0.1:9090:9090
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus:/prometheus
@@ -44,7 +44,7 @@ services:
     networks:
       - example_network
     ports:
-      - 3000:3000
+      - 127.0.0.1:3000:3000
     environment:
       - GF_SECURITY_ADMIN_USER=examples
       - GF_SECURITY_ADMIN_PASSWORD=examples
