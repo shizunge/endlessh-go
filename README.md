@@ -2,6 +2,8 @@
 
 A golang implementation of [endlessh](https://nullprogram.com/blog/2019/03/22/) exporting Prometheus metrics, visualized by a Grafana dashboard.
 
+![screenshot](dashboard/screenshot.png)
+
 ## Introduction
 
 Endlessh is a great idea that not only blocks the brute force SSH attacks, but also wastes attackers time as a kind of counter-attack. Besides trapping the attackers, I also want to visualize the Geolocations and other statistics of the sources of attacks. Unfortunately the wonderful original [C implementation of endlessh](https://github.com/skeeto/endlessh) only provides text based log, but I do not like the solution that writing extra scripts to parse the log outputs, then exporting the results to a dashboard, because it would introduce extra layers in my current setup and it would depend on the format of the text log file rather than some structured data. Thus I create this golang implementation of endlessh to export [Prometheus](https://prometheus.io/) metrics and a [Grafana](https://grafana.com/) dashboard to visualize them.
@@ -33,7 +35,7 @@ ssh -p 2222 localhost
 
 If you want log like the [C implementation](https://github.com/skeeto/endlessh), you need to set both CLI arguments `-logtostderr` and `-v=1`, then the log will go to stderr. You can set different log destinations via CLI arguments.
 
-Also check out [examples](./examples/README.md).
+Also check out [examples](./examples/README.md) for the setup of the full stack.
 
 ## Usage
 
@@ -94,8 +96,6 @@ It listens to port `2112` and entry point is `/metrics` by default. The port and
 The endlessh-go server stores the geohash of attackers as a label on `endlessh_client_open_count`, which is also off by default. You can turn it on via the CLI argument `-geoip_supplier`. The endlessh-go uses service from either [ip-api](https://ip-api.com/) or [freegeoip](https://freegeoip.live/), which may enforce a query rate and limit commercial use. Visit their website for their terms and policies.
 
 ## Dashboard
-
-![screenshot](dashboard/screenshot.png)
 
 The dashboard requires Grafana 8.2.
 
