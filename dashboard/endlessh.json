@@ -9,6 +9,7 @@
       "pluginName": "Prometheus"
     }
   ],
+  "__elements": [],
   "__requires": [
     {
       "type": "panel",
@@ -20,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "8.2.2"
+      "version": "8.3.1"
     },
     {
       "type": "panel",
@@ -75,15 +76,18 @@
   "description": "Dashboard for endlessh",
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": null,
+  "gnetId": 15156,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1635302834418,
+  "iteration": 1639279172127,
   "links": [],
   "liveNow": false,
   "panels": [
     {
-      "datasource": "-- Dashboard --",
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -124,7 +128,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.2.2",
+      "pluginVersion": "8.3.1",
       "targets": [
         {
           "panelId": 47,
@@ -190,7 +194,10 @@
       "type": "stat"
     },
     {
-      "datasource": "-- Dashboard --",
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -232,7 +239,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.2.2",
+      "pluginVersion": "8.3.1",
       "targets": [
         {
           "panelId": 47,
@@ -248,14 +255,12 @@
               "Value #Count": {
                 "aggregations": [
                   "lastNotNull"
-                ],
-                "operation": null
+                ]
               },
               "Value #Seen": {
                 "aggregations": [
                   "sum"
-                ],
-                "operation": null
+                ]
               },
               "Value #Time": {
                 "aggregations": [
@@ -308,7 +313,10 @@
       "type": "stat"
     },
     {
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -350,7 +358,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.2.2",
+      "pluginVersion": "8.3.1",
       "targets": [
         {
           "exemplar": true,
@@ -365,7 +373,10 @@
       "type": "stat"
     },
     {
-      "datasource": "-- Dashboard --",
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -406,7 +417,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.2.2",
+      "pluginVersion": "8.3.1",
       "targets": [
         {
           "panelId": 47,
@@ -420,14 +431,12 @@
           "options": {
             "fields": {
               "Time": {
-                "aggregations": [],
-                "operation": null
+                "aggregations": []
               },
               "Value #Count": {
                 "aggregations": [
                   "lastNotNull"
-                ],
-                "operation": null
+                ]
               },
               "Value #Seen": {
                 "aggregations": [
@@ -473,7 +482,10 @@
       "type": "stat"
     },
     {
-      "datasource": "-- Dashboard --",
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -506,7 +518,6 @@
         "y": 0
       },
       "id": 45,
-      "maxDataPoints": null,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -522,8 +533,7 @@
         "text": {},
         "textMode": "value"
       },
-      "pluginVersion": "8.2.2",
-      "repeat": null,
+      "pluginVersion": "8.3.1",
       "targets": [
         {
           "panelId": 47,
@@ -551,8 +561,7 @@
               "country": {
                 "aggregations": [
                   "lastNotNull"
-                ],
-                "operation": null
+                ]
               },
               "ip": {
                 "aggregations": [],
@@ -619,7 +628,10 @@
       "type": "stat"
     },
     {
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -655,8 +667,6 @@
         "y": 0
       },
       "id": 20,
-      "interval": null,
-      "maxDataPoints": null,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -672,7 +682,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.2.2",
+      "pluginVersion": "8.3.1",
       "targets": [
         {
           "exemplar": true,
@@ -687,7 +697,10 @@
       "type": "stat"
     },
     {
-      "datasource": "-- Dashboard --",
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -762,7 +775,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "-- Dashboard --",
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -902,8 +918,10 @@
       "type": "piechart"
     },
     {
-      "cacheTimeout": null,
-      "datasource": "-- Dashboard --",
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -929,12 +947,11 @@
         "y": 7
       },
       "id": 48,
-      "interval": null,
       "links": [],
-      "maxDataPoints": null,
       "options": {
         "basemap": {
           "config": {},
+          "name": "Layer 0",
           "type": "default"
         },
         "controls": {
@@ -959,12 +976,30 @@
                 "fixed": 5,
                 "max": 10,
                 "min": 2
+              },
+              "style": {
+                "color": {
+                  "field": "Connections",
+                  "fixed": "dark-green"
+                },
+                "size": {
+                  "field": "Connections",
+                  "fixed": 5,
+                  "max": 9,
+                  "min": 2
+                },
+                "text": {
+                  "field": "location (lastNotNull) (lastNotNull)",
+                  "fixed": "",
+                  "mode": "fixed"
+                }
               }
             },
             "location": {
               "geohash": "Geohash",
               "mode": "geohash"
             },
+            "name": "Layer 1",
             "type": "markers"
           }
         ],
@@ -975,13 +1010,13 @@
           "zoom": 1
         }
       },
+      "pluginVersion": "8.3.1",
       "targets": [
         {
           "panelId": 47,
           "refId": "A"
         }
       ],
-      "timeFrom": null,
       "title": "Locations",
       "transformations": [
         {
@@ -991,8 +1026,7 @@
               "Time": {
                 "aggregations": [
                   "firstNotNull"
-                ],
-                "operation": null
+                ]
               },
               "Value": {
                 "aggregations": [
@@ -1131,7 +1165,10 @@
       "type": "geomap"
     },
     {
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1208,16 +1245,23 @@
       },
       "id": 47,
       "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "frameIndex": 0,
         "showHeader": true,
         "sortBy": [
           {
             "desc": true,
-            "displayName": "Last Connection"
+            "displayName": "Trapped Time"
           }
         ]
       },
-      "pluginVersion": "8.2.2",
+      "pluginVersion": "8.3.1",
       "targets": [
         {
           "exemplar": true,
@@ -1363,8 +1407,8 @@
       "type": "table"
     }
   ],
-  "refresh": "1m",
-  "schemaVersion": 31,
+  "refresh": "",
+  "schemaVersion": 33,
   "style": "dark",
   "tags": [
     "prometheus"
@@ -1372,12 +1416,12 @@
   "templating": {
     "list": [
       {
-        "allValue": null,
         "current": {},
-        "datasource": "${DS_PROMETHEUS}",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
         "definition": "label_values(endlessh_client_open_count_total, job)",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Job",
@@ -1395,12 +1439,12 @@
         "type": "query"
       },
       {
-        "allValue": null,
         "current": {},
-        "datasource": "${DS_PROMETHEUS}",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
         "definition": "label_values(endlessh_client_open_count_total, instance)",
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Host",
@@ -1427,5 +1471,6 @@
   "timezone": "",
   "title": "Endlessh",
   "uid": "ATIxYkO7k",
-  "version": 2
+  "version": 3,
+  "weekStart": ""
 }
