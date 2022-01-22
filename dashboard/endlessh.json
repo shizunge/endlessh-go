@@ -21,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "8.3.1"
+      "version": "8.3.4"
     },
     {
       "type": "panel",
@@ -73,13 +73,13 @@
       }
     ]
   },
-  "description": "Dashboard for endlessh",
+  "description": "Dashboard for endlessh (Fix for Grafana 8.3.4)",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "gnetId": 15156,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1639279172127,
+  "iteration": 1642838440700,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -128,7 +128,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.3.1",
+      "pluginVersion": "8.3.4",
       "targets": [
         {
           "panelId": 47,
@@ -137,6 +137,24 @@
       ],
       "title": "Connections",
       "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "greaterOrEqual",
+                  "options": {
+                    "value": 0
+                  }
+                },
+                "fieldName": "Value #Seen"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        },
         {
           "id": "groupBy",
           "options": {
@@ -239,7 +257,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.3.1",
+      "pluginVersion": "8.3.4",
       "targets": [
         {
           "panelId": 47,
@@ -248,6 +266,24 @@
       ],
       "title": "Trapped Time",
       "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "greaterOrEqual",
+                  "options": {
+                    "value": 0
+                  }
+                },
+                "fieldName": "Value #Trapped"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        },
         {
           "id": "groupBy",
           "options": {
@@ -358,7 +394,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.3.1",
+      "pluginVersion": "8.3.4",
       "targets": [
         {
           "exemplar": true,
@@ -417,7 +453,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.3.1",
+      "pluginVersion": "8.3.4",
       "targets": [
         {
           "panelId": 47,
@@ -533,7 +569,7 @@
         "text": {},
         "textMode": "value"
       },
-      "pluginVersion": "8.3.1",
+      "pluginVersion": "8.3.4",
       "targets": [
         {
           "panelId": 47,
@@ -542,6 +578,24 @@
       ],
       "title": "Latest Connection",
       "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "greaterOrEqual",
+                  "options": {
+                    "value": 0
+                  }
+                },
+                "fieldName": "Value #Seen"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        },
         {
           "id": "groupBy",
           "options": {
@@ -682,7 +736,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.3.1",
+      "pluginVersion": "8.3.4",
       "targets": [
         {
           "exemplar": true,
@@ -833,6 +887,24 @@
       "title": "Connections by country",
       "transformations": [
         {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "greaterOrEqual",
+                  "options": {
+                    "value": 0
+                  }
+                },
+                "fieldName": "Value #Seen"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        },
+        {
           "id": "groupBy",
           "options": {
             "fields": {
@@ -864,24 +936,6 @@
         {
           "id": "merge",
           "options": {}
-        },
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "greater",
-                  "options": {
-                    "value": 0
-                  }
-                },
-                "fieldName": "Value #Seen (sum)"
-              }
-            ],
-            "match": "any",
-            "type": "include"
-          }
         },
         {
           "id": "groupBy",
@@ -1010,7 +1064,7 @@
           "zoom": 1
         }
       },
-      "pluginVersion": "8.3.1",
+      "pluginVersion": "8.3.4",
       "targets": [
         {
           "panelId": 47,
@@ -1019,6 +1073,24 @@
       ],
       "title": "Locations",
       "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "greaterOrEqual",
+                  "options": {
+                    "value": 0
+                  }
+                },
+                "fieldName": "Value #Seen"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        },
         {
           "id": "groupBy",
           "options": {
@@ -1257,11 +1329,11 @@
         "sortBy": [
           {
             "desc": true,
-            "displayName": "Trapped Time"
+            "displayName": "Last Connection"
           }
         ]
       },
-      "pluginVersion": "8.3.1",
+      "pluginVersion": "8.3.4",
       "targets": [
         {
           "exemplar": true,
@@ -1284,6 +1356,37 @@
       ],
       "title": "Clients",
       "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "greaterOrEqual",
+                  "options": {
+                    "value": 0
+                  }
+                },
+                "fieldName": "Value #Seen"
+              },
+              {
+                "config": {
+                  "id": "greaterOrEqual",
+                  "options": {
+                    "value": 0
+                  }
+                },
+                "fieldName": "Value #Trapped"
+              }
+            ],
+            "match": "all",
+            "type": "include"
+          }
+        },
         {
           "id": "groupBy",
           "options": {
@@ -1318,10 +1421,6 @@
               }
             }
           }
-        },
-        {
-          "id": "merge",
-          "options": {}
         },
         {
           "id": "groupBy",
@@ -1365,24 +1464,6 @@
           }
         },
         {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "greater",
-                  "options": {
-                    "value": 0
-                  }
-                },
-                "fieldName": "Value #Seen (sum) (lastNotNull)"
-              }
-            ],
-            "match": "any",
-            "type": "include"
-          }
-        },
-        {
           "id": "organize",
           "options": {
             "excludeByName": {},
@@ -1408,7 +1489,7 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 33,
+  "schemaVersion": 34,
   "style": "dark",
   "tags": [
     "prometheus"
@@ -1471,6 +1552,6 @@
   "timezone": "",
   "title": "Endlessh",
   "uid": "ATIxYkO7k",
-  "version": 3,
+  "version": 4,
   "weekStart": ""
 }
