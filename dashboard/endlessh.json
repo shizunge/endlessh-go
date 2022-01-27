@@ -73,13 +73,13 @@
       }
     ]
   },
-  "description": "Dashboard for endlessh (Fix for Grafana 8.3.4)",
+  "description": "Dashboard for endlessh",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "gnetId": 15156,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1642838440700,
+  "iteration": 1643266160767,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -131,12 +131,22 @@
       "pluginVersion": "8.3.4",
       "targets": [
         {
-          "panelId": 47,
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 49,
           "refId": "A"
         }
       ],
       "title": "Connections",
       "transformations": [
+        {
+          "id": "filterByRefId",
+          "options": {
+            "include": "Seen"
+          }
+        },
         {
           "id": "filterByValue",
           "options": {
@@ -188,10 +198,6 @@
               "sum"
             ]
           }
-        },
-        {
-          "id": "merge",
-          "options": {}
         },
         {
           "id": "organize",
@@ -260,12 +266,22 @@
       "pluginVersion": "8.3.4",
       "targets": [
         {
-          "panelId": 47,
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 49,
           "refId": "A"
         }
       ],
       "title": "Trapped Time",
       "transformations": [
+        {
+          "id": "filterByRefId",
+          "options": {
+            "include": "Trapped"
+          }
+        },
         {
           "id": "filterByValue",
           "options": {
@@ -280,7 +296,7 @@
                 "fieldName": "Value #Trapped"
               }
             ],
-            "match": "any",
+            "match": "all",
             "type": "include"
           }
         },
@@ -327,10 +343,6 @@
               "sum"
             ]
           }
-        },
-        {
-          "id": "merge",
-          "options": {}
         },
         {
           "id": "organize",
@@ -456,12 +468,22 @@
       "pluginVersion": "8.3.4",
       "targets": [
         {
-          "panelId": 47,
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 49,
           "refId": "A"
         }
       ],
       "title": "Unique IPs",
       "transformations": [
+        {
+          "id": "filterByRefId",
+          "options": {
+            "include": "Seen"
+          }
+        },
         {
           "id": "groupBy",
           "options": {
@@ -497,10 +519,6 @@
               "count"
             ]
           }
-        },
-        {
-          "id": "merge",
-          "options": {}
         },
         {
           "id": "organize",
@@ -572,12 +590,22 @@
       "pluginVersion": "8.3.4",
       "targets": [
         {
-          "panelId": 47,
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 49,
           "refId": "A"
         }
       ],
       "title": "Latest Connection",
       "transformations": [
+        {
+          "id": "filterByRefId",
+          "options": {
+            "include": "Seen"
+          }
+        },
         {
           "id": "filterByValue",
           "options": {
@@ -622,28 +650,6 @@
                 "operation": "groupby"
               }
             }
-          }
-        },
-        {
-          "id": "merge",
-          "options": {}
-        },
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "greater",
-                  "options": {
-                    "value": 0
-                  }
-                },
-                "fieldName": "Value #Seen (sum)"
-              }
-            ],
-            "match": "any",
-            "type": "include"
           }
         },
         {
@@ -880,12 +886,22 @@
       },
       "targets": [
         {
-          "panelId": 47,
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 49,
           "refId": "A"
         }
       ],
       "title": "Connections by country",
       "transformations": [
+        {
+          "id": "filterByRefId",
+          "options": {
+            "include": "Seen"
+          }
+        },
         {
           "id": "filterByValue",
           "options": {
@@ -932,10 +948,6 @@
               }
             }
           }
-        },
-        {
-          "id": "merge",
-          "options": {}
         },
         {
           "id": "groupBy",
@@ -1067,12 +1079,22 @@
       "pluginVersion": "8.3.4",
       "targets": [
         {
-          "panelId": 47,
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 49,
           "refId": "A"
         }
       ],
       "title": "Locations",
       "transformations": [
+        {
+          "id": "filterByRefId",
+          "options": {
+            "include": "Seen"
+          }
+        },
         {
           "id": "filterByValue",
           "options": {
@@ -1134,72 +1156,12 @@
                 "aggregations": [
                   "lastNotNull"
                 ],
-                "operation": "aggregate"
+                "operation": "groupby"
               },
               "ip": {
-                "aggregations": [],
-                "operation": "groupby"
+                "aggregations": []
               },
               "location": {
-                "aggregations": [
-                  "lastNotNull"
-                ],
-                "operation": "aggregate"
-              }
-            }
-          }
-        },
-        {
-          "id": "groupBy",
-          "options": {
-            "fields": {
-              "Time (firstNotNull)": {
-                "aggregations": [
-                  "firstNotNull"
-                ],
-                "operation": "aggregate"
-              },
-              "Time (lastNotNull)": {
-                "aggregations": [
-                  "lastNotNull"
-                ],
-                "operation": "aggregate"
-              },
-              "Value #Count (lastNotNull)": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Value #Seen (sum)": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Value #geo (lastNotNull)": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Value #time (lastNotNull)": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Value (lastNotNull)": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "geohash (lastNotNull)": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "location (lastNotNull)": {
                 "aggregations": [
                   "lastNotNull"
                 ],
@@ -1219,17 +1181,9 @@
               "location (lastNotNull) (lastNotNull)": 2
             },
             "renameByName": {
-              "Time (firstNotNull) (firstNotNull)": "Time",
-              "Time (firstNotNull) (lastNotNull)": "Time",
-              "Value #Count (lastNotNull) (lastNotNull)": "Connections",
-              "Value #Count (lastNotNull) (sum)": "Connections",
-              "Value #Seen (sum) (lastNotNull)": "Count",
-              "Value #Seen (sum) (sum)": "Connections",
-              "Value #geo (lastNotNull) (sum)": "Value",
-              "Value #time (lastNotNull) (sum)": "Trapped Time",
-              "Value (lastNotNull) (sum)": "Value",
-              "geohash (lastNotNull)": "Geohash",
-              "location (lastNotNull) (lastNotNull)": "Location"
+              "Value #Seen (sum)": "Connections",
+              "geohash": "Geohash",
+              "location (lastNotNull)": "Location"
             }
           }
         }
@@ -1237,10 +1191,6 @@
       "type": "geomap"
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1274,6 +1224,14 @@
               {
                 "id": "custom.minWidth",
                 "value": 150
+              },
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
               }
             ]
           },
@@ -1315,7 +1273,7 @@
         "x": 12,
         "y": 11
       },
-      "id": 47,
+      "id": 49,
       "options": {
         "footer": {
           "fields": "",
@@ -1336,6 +1294,10 @@
       "pluginVersion": "8.3.4",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "exemplar": true,
           "expr": "(endlessh_client_open_count{instance=\"$host\",job=\"$job\"} - endlessh_client_open_count{instance=\"$host\",job=\"$job\"} offset $__interval) > 0 or (endlessh_client_open_count{instance=\"$host\",job=\"$job\"}!=0 unless endlessh_client_open_count{instance=\"$host\",job=\"$job\"} offset $__interval)",
           "format": "table",
@@ -1345,6 +1307,10 @@
           "refId": "Seen"
         },
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "exemplar": true,
           "expr": "(endlessh_client_trapped_time_seconds{instance=\"$host\",job=\"$job\"} - endlessh_client_trapped_time_seconds{instance=\"$host\",job=\"$job\"} offset $__interval) > 0 or (endlessh_client_trapped_time_seconds{instance=\"$host\",job=\"$job\"}!=0 unless endlessh_client_trapped_time_seconds{instance=\"$host\",job=\"$job\"} offset $__interval)",
           "format": "table",
@@ -1356,10 +1322,6 @@
       ],
       "title": "Clients",
       "transformations": [
-        {
-          "id": "merge",
-          "options": {}
-        },
         {
           "id": "filterByValue",
           "options": {
@@ -1383,6 +1345,63 @@
                 "fieldName": "Value #Trapped"
               }
             ],
+            "match": "any",
+            "type": "include"
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "Seen",
+            "mode": "reduceRow",
+            "reduce": {
+              "include": [
+                "Value #Seen"
+              ],
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "Trapped",
+            "mode": "reduceRow",
+            "reduce": {
+              "include": [
+                "Value #Trapped"
+              ],
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "greaterOrEqual",
+                  "options": {
+                    "value": 0
+                  }
+                },
+                "fieldName": "Seen"
+              },
+              {
+                "config": {
+                  "id": "greaterOrEqual",
+                  "options": {
+                    "value": 0
+                  }
+                },
+                "fieldName": "Trapped"
+              }
+            ],
             "match": "all",
             "type": "include"
           }
@@ -1391,19 +1410,19 @@
           "id": "groupBy",
           "options": {
             "fields": {
-              "Time": {
-                "aggregations": [
-                  "lastNotNull"
-                ],
-                "operation": "aggregate"
-              },
-              "Value #Seen": {
+              "Seen": {
                 "aggregations": [
                   "sum"
                 ],
                 "operation": "aggregate"
               },
-              "Value #Trapped": {
+              "Time": {
+                "aggregations": [
+                  "max"
+                ],
+                "operation": "aggregate"
+              },
+              "Trapped": {
                 "aggregations": [
                   "sum"
                 ],
@@ -1423,44 +1442,19 @@
           }
         },
         {
-          "id": "groupBy",
+          "id": "filterByValue",
           "options": {
-            "fields": {
-              "Time (lastNotNull)": {
-                "aggregations": [
-                  "firstNotNull"
-                ],
-                "operation": "aggregate"
-              },
-              "Value #Seen (sum)": {
-                "aggregations": [
-                  "lastNotNull"
-                ],
-                "operation": "aggregate"
-              },
-              "Value #Trapped (lastNotNull)": {
-                "aggregations": [
-                  "lastNotNull"
-                ],
-                "operation": "aggregate"
-              },
-              "Value #Trapped (sum)": {
-                "aggregations": [
-                  "lastNotNull"
-                ],
-                "operation": "aggregate"
-              },
-              "country (lastNotNull)": {
-                "aggregations": [
-                  "lastNotNull"
-                ],
-                "operation": "aggregate"
-              },
-              "ip": {
-                "aggregations": [],
-                "operation": "groupby"
+            "filters": [
+              {
+                "config": {
+                  "id": "isNull",
+                  "options": {}
+                },
+                "fieldName": "ip"
               }
-            }
+            ],
+            "match": "any",
+            "type": "exclude"
           }
         },
         {
@@ -1468,19 +1462,18 @@
           "options": {
             "excludeByName": {},
             "indexByName": {
-              "Time (lastNotNull) (firstNotNull)": 0,
-              "Value #Seen (sum) (lastNotNull)": 3,
-              "Value #Trapped (lastNotNull) (lastNotNull)": 4,
-              "country (lastNotNull) (lastNotNull)": 2,
-              "ip": 1
+              "Time (max)": 0,
+              "ip": 1,
+              "country (lastNotNull)": 2,
+              "Seen (sum)": 3,
+              "Trapped (sum)": 4
             },
             "renameByName": {
-              "Time (lastNotNull) (firstNotNull)": "Last Connection",
-              "Value #Seen (sum) (lastNotNull)": "Connections",
-              "Value #Trapped (lastNotNull) (lastNotNull)": "Trapped Time",
-              "Value #Trapped (sum) (lastNotNull)": "Trapped Time",
-              "country (lastNotNull) (lastNotNull)": "Country",
-              "ip": "IP"
+              "Time (max)": "Last Connection",
+              "ip": "IP",
+              "country (lastNotNull)": "Country",
+              "Seen (sum)": "Connections",
+              "Trapped (sum)": "Trapped Time"
             }
           }
         }
@@ -1552,6 +1545,6 @@
   "timezone": "",
   "title": "Endlessh",
   "uid": "ATIxYkO7k",
-  "version": 4,
+  "version": 5,
   "weekStart": ""
 }
