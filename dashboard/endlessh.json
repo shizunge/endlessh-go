@@ -1191,6 +1191,10 @@
       "type": "geomap"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1294,10 +1298,6 @@
       "pluginVersion": "8.3.4",
       "targets": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
           "exemplar": true,
           "expr": "(endlessh_client_open_count{instance=\"$host\",job=\"$job\"} - endlessh_client_open_count{instance=\"$host\",job=\"$job\"} offset $__interval) > 0 or (endlessh_client_open_count{instance=\"$host\",job=\"$job\"}!=0 unless endlessh_client_open_count{instance=\"$host\",job=\"$job\"} offset $__interval)",
           "format": "table",
@@ -1307,10 +1307,6 @@
           "refId": "Seen"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
           "exemplar": true,
           "expr": "(endlessh_client_trapped_time_seconds{instance=\"$host\",job=\"$job\"} - endlessh_client_trapped_time_seconds{instance=\"$host\",job=\"$job\"} offset $__interval) > 0 or (endlessh_client_trapped_time_seconds{instance=\"$host\",job=\"$job\"}!=0 unless endlessh_client_trapped_time_seconds{instance=\"$host\",job=\"$job\"} offset $__interval)",
           "format": "table",
@@ -1545,6 +1541,6 @@
   "timezone": "",
   "title": "Endlessh",
   "uid": "ATIxYkO7k",
-  "version": 5,
+  "version": 6,
   "weekStart": ""
 }
