@@ -104,3 +104,8 @@ You can import the dashboard from Grafana.com using ID [15156](https://grafana.c
 The dashboard visualizes data for the selected time range.
 
 The IP addresses are clickable and link you to the [ARIN](https://www.arin.net/) database.
+
+
+## Issues
+
+If you have any problems with or questions about this image, please contact me through a [GitHub issue][ https://github.com/shizunge/endlessh-go/issues]
