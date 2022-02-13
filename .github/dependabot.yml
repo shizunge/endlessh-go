@@ -5,15 +5,15 @@
 
 version: 2
 updates:
-  - package-ecosystem: "gomod" # See documentation for possible values
+  - package-ecosystem: "gomod"
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
-  - package-ecosystem: "github-actions" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows/" # Location of package manifests
     schedule:
       interval: "weekly"
-  - package-ecosystem: "docker" # See documentation for possible values
+  - package-ecosystem: "docker"
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
