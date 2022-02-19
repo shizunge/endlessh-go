@@ -106,6 +106,6 @@ The dashboard visualizes data for the selected time range.
 The IP addresses are clickable and link you to the [ARIN](https://www.arin.net/) database.
 
 
-## Issues
+## Contacts
 
 If you have any problems or questions, please contact me through a [GitHub issue](https://github.com/shizunge/endlessh-go/issues)
