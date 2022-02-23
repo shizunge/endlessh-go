@@ -21,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "8.3.4"
+      "version": "8.3.6"
     },
     {
       "type": "panel",
@@ -73,13 +73,13 @@
       }
     ]
   },
-  "description": "Dashboard for endlessh",
+  "description": "Dashboard for endlessh (add option All to job and host)",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "gnetId": 15156,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1643266160767,
+  "iteration": 1645482521172,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -128,7 +128,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.3.4",
+      "pluginVersion": "8.3.6",
       "targets": [
         {
           "datasource": {
@@ -169,12 +169,6 @@
           "id": "groupBy",
           "options": {
             "fields": {
-              "Value #Count": {
-                "aggregations": [
-                  "lastNotNull"
-                ],
-                "operation": "aggregate"
-              },
               "Value #Seen": {
                 "aggregations": [
                   "sum"
@@ -203,13 +197,8 @@
           "id": "organize",
           "options": {
             "excludeByName": {},
-            "indexByName": {
-              "Field": 0,
-              "Total": 1
-            },
+            "indexByName": {},
             "renameByName": {
-              "Total": "Total number connections that endlessh trapped",
-              "Value #Count (lastNotNull)": "Total number connections that endlessh trapped",
               "Value #Seen (sum)": "Total number connections that endlessh trapped"
             }
           }
@@ -263,7 +252,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.3.4",
+      "pluginVersion": "8.3.6",
       "targets": [
         {
           "datasource": {
@@ -304,22 +293,6 @@
           "id": "groupBy",
           "options": {
             "fields": {
-              "Value #Count": {
-                "aggregations": [
-                  "lastNotNull"
-                ]
-              },
-              "Value #Seen": {
-                "aggregations": [
-                  "sum"
-                ]
-              },
-              "Value #Time": {
-                "aggregations": [
-                  "lastNotNull"
-                ],
-                "operation": "aggregate"
-              },
               "Value #Trapped": {
                 "aggregations": [
                   "sum"
@@ -351,8 +324,6 @@
             "indexByName": {},
             "renameByName": {
               "Total": "Seconds spent on endlessh",
-              "Value #Time (lastNotNull)": "Seconds spent on endlessh",
-              "Value #Trapped (lastNotNull)": "Time spent on endlessh",
               "Value #Trapped (sum)": "Time spent on endlessh"
             }
           }
@@ -406,11 +377,15 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.3.4",
+      "pluginVersion": "8.3.6",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "exemplar": true,
-          "expr": "increase(endlessh_sent_bytes_total{instance=\"$host\",job=\"$job\"}[$__range])",
+          "expr": "sum(increase(endlessh_sent_bytes_total{instance=~\"$host\",job=~\"$job\"}[$__range]))",
           "hide": false,
           "interval": "",
           "legendFormat": "Bytes sent by endlessh",
@@ -465,7 +440,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.3.4",
+      "pluginVersion": "8.3.6",
       "targets": [
         {
           "datasource": {
@@ -488,14 +463,6 @@
           "id": "groupBy",
           "options": {
             "fields": {
-              "Time": {
-                "aggregations": []
-              },
-              "Value #Count": {
-                "aggregations": [
-                  "lastNotNull"
-                ]
-              },
               "Value #Seen": {
                 "aggregations": [
                   "sum"
@@ -526,7 +493,6 @@
             "excludeByName": {},
             "indexByName": {},
             "renameByName": {
-              "Count": "Unique IPs connected",
               "Value #Seen (sum)": "Unique IPs connected",
               "ip": ""
             }
@@ -587,7 +553,7 @@
         "text": {},
         "textMode": "value"
       },
-      "pluginVersion": "8.3.4",
+      "pluginVersion": "8.3.6",
       "targets": [
         {
           "datasource": {
@@ -640,11 +606,6 @@
                 ],
                 "operation": "aggregate"
               },
-              "country": {
-                "aggregations": [
-                  "lastNotNull"
-                ]
-              },
               "ip": {
                 "aggregations": [],
                 "operation": "groupby"
@@ -670,17 +631,11 @@
               "instance": true,
               "job": true
             },
-            "indexByName": {
-              "Time (lastNotNull)": 0,
-              "instance": 3,
-              "ip (lastNotNull)": 1,
-              "job": 2
-            },
+            "indexByName": {},
             "renameByName": {
               "Time (lastNotNull)": "Time",
               "Value #Seen (sum)": "Count",
-              "ip": "Client IP of the latest connection",
-              "ip (lastNotNull)": "Client IP of the latest connection"
+              "ip": "Client IP of the latest connection"
             }
           }
         }
@@ -742,11 +697,15 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.3.4",
+      "pluginVersion": "8.3.6",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "exemplar": true,
-          "expr": "(endlessh_client_open_count_total{instance=\"$host\",job=\"$job\"}) - (endlessh_client_closed_count_total{instance=\"$host\",job=\"$job\"} offset $__interval  or endlessh_client_open_count_total{instance=\"$host\",job=\"$job\"} * 0)",
+          "expr": "sum((endlessh_client_open_count_total{instance=~\"$host\",job=~\"$job\"}) - (endlessh_client_closed_count_total{instance=~\"$host\",job=~\"$job\"} offset $__interval  or endlessh_client_open_count_total{instance=~\"$host\",job=~\"$job\"} * 0))",
           "instant": false,
           "interval": "",
           "legendFormat": "Open Connections",
@@ -924,12 +883,6 @@
           "id": "groupBy",
           "options": {
             "fields": {
-              "Value #Count": {
-                "aggregations": [
-                  "lastNotNull"
-                ],
-                "operation": "aggregate"
-              },
               "Value #Seen": {
                 "aggregations": [
                   "sum"
@@ -953,12 +906,6 @@
           "id": "groupBy",
           "options": {
             "fields": {
-              "Value #Count (lastNotNull)": {
-                "aggregations": [
-                  "sum"
-                ],
-                "operation": "aggregate"
-              },
               "Value #Seen (sum)": {
                 "aggregations": [
                   "sum"
@@ -966,10 +913,6 @@
                 "operation": "aggregate"
               },
               "country (last)": {
-                "aggregations": [],
-                "operation": "groupby"
-              },
-              "country (lastNotNull)": {
                 "aggregations": [],
                 "operation": "groupby"
               }
@@ -1076,7 +1019,7 @@
           "zoom": 1
         }
       },
-      "pluginVersion": "8.3.4",
+      "pluginVersion": "8.3.6",
       "targets": [
         {
           "datasource": {
@@ -1117,38 +1060,9 @@
           "id": "groupBy",
           "options": {
             "fields": {
-              "Time": {
-                "aggregations": [
-                  "firstNotNull"
-                ]
-              },
-              "Value": {
-                "aggregations": [
-                  "lastNotNull"
-                ],
-                "operation": "aggregate"
-              },
-              "Value #Count": {
-                "aggregations": [
-                  "lastNotNull"
-                ],
-                "operation": "aggregate"
-              },
               "Value #Seen": {
                 "aggregations": [
                   "sum"
-                ],
-                "operation": "aggregate"
-              },
-              "Value #geo": {
-                "aggregations": [
-                  "lastNotNull"
-                ],
-                "operation": "aggregate"
-              },
-              "Value #time": {
-                "aggregations": [
-                  "lastNotNull"
                 ],
                 "operation": "aggregate"
               },
@@ -1157,9 +1071,6 @@
                   "lastNotNull"
                 ],
                 "operation": "groupby"
-              },
-              "ip": {
-                "aggregations": []
               },
               "location": {
                 "aggregations": [
@@ -1175,10 +1086,9 @@
           "options": {
             "excludeByName": {},
             "indexByName": {
-              "Time (firstNotNull) (firstNotNull)": 0,
-              "Value #geo (lastNotNull) (sum)": 3,
-              "geohash (lastNotNull)": 1,
-              "location (lastNotNull) (lastNotNull)": 2
+              "Value #geo (lastNotNull) (sum)": 2,
+              "geohash (lastNotNull)": 0,
+              "location (lastNotNull) (lastNotNull)": 1
             },
             "renameByName": {
               "Value #Seen (sum)": "Connections",
@@ -1295,11 +1205,15 @@
           }
         ]
       },
-      "pluginVersion": "8.3.4",
+      "pluginVersion": "8.3.6",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "exemplar": true,
-          "expr": "(endlessh_client_open_count{instance=\"$host\",job=\"$job\"} - endlessh_client_open_count{instance=\"$host\",job=\"$job\"} offset $__interval) > 0 or (endlessh_client_open_count{instance=\"$host\",job=\"$job\"}!=0 unless endlessh_client_open_count{instance=\"$host\",job=\"$job\"} offset $__interval)",
+          "expr": "(endlessh_client_open_count{instance=~\"$host\",job=~\"$job\"} - endlessh_client_open_count{instance=~\"$host\",job=~\"$job\"} offset $__interval) > 0 or (endlessh_client_open_count{instance=~\"$host\",job=~\"$job\"}!=0 unless endlessh_client_open_count{instance=~\"$host\",job=~\"$job\"} offset $__interval)",
           "format": "table",
           "hide": false,
           "interval": "",
@@ -1307,8 +1221,12 @@
           "refId": "Seen"
         },
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "exemplar": true,
-          "expr": "(endlessh_client_trapped_time_seconds{instance=\"$host\",job=\"$job\"} - endlessh_client_trapped_time_seconds{instance=\"$host\",job=\"$job\"} offset $__interval) > 0 or (endlessh_client_trapped_time_seconds{instance=\"$host\",job=\"$job\"}!=0 unless endlessh_client_trapped_time_seconds{instance=\"$host\",job=\"$job\"} offset $__interval)",
+          "expr": "(endlessh_client_trapped_time_seconds{instance=~\"$host\",job=~\"$job\"} - endlessh_client_trapped_time_seconds{instance=~\"$host\",job=~\"$job\"} offset $__interval) > 0 or (endlessh_client_trapped_time_seconds{instance=~\"$host\",job=~\"$job\"}!=0 unless endlessh_client_trapped_time_seconds{instance=~\"$host\",job=~\"$job\"} offset $__interval)",
           "format": "table",
           "hide": false,
           "interval": "",
@@ -1458,18 +1376,18 @@
           "options": {
             "excludeByName": {},
             "indexByName": {
-              "Time (max)": 0,
-              "ip": 1,
-              "country (lastNotNull)": 2,
               "Seen (sum)": 3,
-              "Trapped (sum)": 4
+              "Time (max)": 0,
+              "Trapped (sum)": 4,
+              "country (lastNotNull)": 2,
+              "ip": 1
             },
             "renameByName": {
-              "Time (max)": "Last Connection",
-              "ip": "IP",
-              "country (lastNotNull)": "Country",
               "Seen (sum)": "Connections",
-              "Trapped (sum)": "Trapped Time"
+              "Time (max)": "Last Connection",
+              "Trapped (sum)": "Trapped Time",
+              "country (lastNotNull)": "Country",
+              "ip": "IP"
             }
           }
         }
@@ -1486,6 +1404,7 @@
   "templating": {
     "list": [
       {
+        "allValue": ".*",
         "current": {},
         "datasource": {
           "type": "prometheus",
@@ -1493,9 +1412,9 @@
         },
         "definition": "label_values(endlessh_client_open_count_total, job)",
         "hide": 0,
-        "includeAll": false,
+        "includeAll": true,
         "label": "Job",
-        "multi": false,
+        "multi": true,
         "name": "job",
         "options": [],
         "query": {
@@ -1509,20 +1428,21 @@
         "type": "query"
       },
       {
+        "allValue": ".*",
         "current": {},
         "datasource": {
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "label_values(endlessh_client_open_count_total, instance)",
+        "definition": "label_values(endlessh_client_open_count_total{job=~\"$job\"}, instance)",
         "hide": 0,
-        "includeAll": false,
+        "includeAll": true,
         "label": "Host",
-        "multi": false,
+        "multi": true,
         "name": "host",
         "options": [],
         "query": {
-          "query": "label_values(endlessh_client_open_count_total, instance)",
+          "query": "label_values(endlessh_client_open_count_total{job=~\"$job\"}, instance)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -1541,6 +1461,6 @@
   "timezone": "",
   "title": "Endlessh",
   "uid": "ATIxYkO7k",
-  "version": 6,
+  "version": 7,
   "weekStart": ""
 }
