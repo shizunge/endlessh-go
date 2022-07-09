@@ -39,42 +39,47 @@ Also check out [examples](./examples/README.md) for the setup of the full stack.
 
 ## Usage
 
-Usage of `./endlessh-go`
+`./endlessh-go --help`
 
-* -alsologtostderr
-  * log to standard error as well as files
-* -conn_type string
-  * Connection type. Possible values are tcp, tcp4, tcp6 (default "tcp")
-* -enable_prometheus
-  * Enable prometheus
-* -geoip_supplier string
-  * Supplier to obtain Geohash of IPs. Possible values are "off", "ip-api", "freegeoip" (default "off")
-* -host string
-  * Listening address (default "0.0.0.0")
-* -interval_ms int
-  * Message millisecond delay (default 1000)
-* -line_length int
-  * Maximum banner line length (default 32)
-* -log_backtrace_at value
-  * when logging hits line file:N, emit a stack trace
-* -log_dir string
-  * If non-empty, write log files in this directory
-* -logtostderr
-  * log to standard error instead of files
-* -max_clients int
-  * Maximum number of clients (default 4096)
-* -port string
-  * Listening port (default "2222")
-* -prometheus_entry string
-  * Entry point for prometheus (default "metrics")
-* -prometheus_port string
-  * The port for prometheus (default "2112")
-* -stderrthreshold value
-  * logs at or above this threshold go to stderr
-* -v value
-  * log level for V logs
-* -vmodule value
-  * comma-separated list of pattern=N settings for file-filtered logging
+```
+Usage of ./endlessh-go
+  -alsologtostderr
+        log to standard error as well as files
+  -conn_type string
+        Connection type. Possible values are tcp, tcp4, tcp6 (default "tcp")
+  -enable_prometheus
+        Enable prometheus
+  -geoip_supplier string
+        Supplier to obtain Geohash of IPs. Possible values are "off", "ip-api", "freegeoip", "max-mind-db" (default "off")
+  -host string
+        Listening address (default "0.0.0.0")
+  -interval_ms int
+        Message millisecond delay (default 1000)
+  -line_length int
+        Maximum banner line length (default 32)
+  -log_backtrace_at value
+        when logging hits line file:N, emit a stack trace
+  -log_dir string
+        If non-empty, write log files in this directory
+  -logtostderr
+        log to standard error instead of files
+  -max_clients int
+        Maximum number of clients (default 4096)
+  -max_mind_db string
+        Path to the MaxMind DB file.
+  -port string
+        Listening port (default "2222")
+  -prometheus_entry string
+        Entry point for prometheus (default "metrics")
+  -prometheus_port string
+        The port for prometheus (default "2112")
+  -stderrthreshold value
+        logs at or above this threshold go to stderr
+  -v value
+        log level for V logs
+  -vmodule value
+        comma-separated list of pattern=N settings for file-filtered logging
+```
 
 ## Metrics
 
@@ -94,6 +99,8 @@ The metrics is off by default, you can turn it via the CLI argument `-enable_pro
 It listens to port `2112` and entry point is `/metrics` by default. The port and entry point can be changed via CLI arguments.
 
 The endlessh-go server stores the geohash of attackers as a label on `endlessh_client_open_count`, which is also off by default. You can turn it on via the CLI argument `-geoip_supplier`. The endlessh-go uses service from either [ip-api](https://ip-api.com/) or [freegeoip](https://freegeoip.live/), which may enforce a query rate and limit commercial use. Visit their website for their terms and policies.
+
+You could also use an offline GeoIP database from [MaxMind](https://www.maxmind.com) by setting `-geoip_supplier` to *max-mind-db* and `-max_mind_db` to the path of the database file.
 
 ## Dashboard
 
