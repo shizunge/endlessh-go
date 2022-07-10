@@ -20,10 +20,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strings"
 
+	"github.com/oschwald/geoip2-golang"
 	"github.com/pierrre/geohash"
+)
+
+var (
+	maxMindDbFileName *string
 )
 
 type freegeoip struct {
@@ -132,6 +138,24 @@ func geohashAndLocationFromIpapi(address string) (string, string, string, error)
 	return gh, country, location, nil
 }
 
+func geohashAndLocationFromMaxMindDb(address string) (string, string, string, error) {
+	db, err := geoip2.Open(*maxMindDbFileName)
+	if err != nil {
+		return "s000", "Unknown", "Unknown", err
+	}
+	defer db.Close()
+	// If you are using strings that may be invalid, check that ip is not nil
+	ip := net.ParseIP(address)
+	record, err := db.City(ip)
+	if err != nil {
+		return "s000", "Unknown", "Unknown", err
+	}
+	gh := geohash.EncodeAuto(record.Location.Latitude, record.Location.Longitude)
+	country := record.Country.Names["en"]
+	location := record.City.Names["en"]
+	return gh, country, location, nil
+}
+
 func geohashAndLocation(address string, geoipSupplier string) (string, string, string, error) {
 	switch geoipSupplier {
 	case "off":
@@ -140,6 +164,8 @@ func geohashAndLocation(address string, geoipSupplier string) (string, string, s
 		return geohashAndLocationFromIpapi(address)
 	case "freegeoip":
 		return geohashAndLocationFromFreegeoip(address)
+	case "max-mind-db":
+		return geohashAndLocationFromMaxMindDb(address)
 	default:
 		return "s000", "Unknown", "Unknown", fmt.Errorf("unknown geoipSupplier %v.", geoipSupplier)
 	}
