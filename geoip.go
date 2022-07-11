@@ -32,6 +32,27 @@ var (
 	maxMindDbFileName *string
 )
 
+func composeLocation(country string, region string, city string) string {
+	var locations []string
+	for _, s := range []string{country, region, city} {
+		if strings.TrimSpace(s) != "" {
+			locations = append(locations, s)
+		}
+	}
+	location := strings.Join(locations, ", ")
+	if location == "" {
+		return "Unknown"
+	}
+	return location
+}
+
+func composeCountry(country string) string {
+	if country == "" {
+		return "Unknown"
+	}
+	return country
+}
+
 type freegeoip struct {
 	Ip          string  `json:"ip"`
 	CountryCode string  `json:"country_code"`
@@ -64,21 +85,9 @@ func geohashAndLocationFromFreegeoip(address string) (string, string, string, er
 		return "s000", "Unknown", "Unknown", err
 	}
 
-	var locations []string
-	for _, s := range []string{geo.CountryName, geo.RegionName, geo.City} {
-		if strings.TrimSpace(s) != "" {
-			locations = append(locations, s)
-		}
-	}
-	location := strings.Join(locations, ", ")
-	if location == "" {
-		location = "Unknown"
-	}
-	country := geo.CountryName
-	if country == "" {
-		country = "Unknown"
-	}
 	gh := geohash.EncodeAuto(geo.Latitude, geo.Longitude)
+	country := composeCountry(geo.CountryName)
+	location := composeLocation(geo.CountryName, geo.RegionName, geo.City)
 
 	return gh, country, location, nil
 }
@@ -119,21 +128,9 @@ func geohashAndLocationFromIpapi(address string) (string, string, string, error)
 		return "s000", "Unknown", "Unknown", fmt.Errorf("failed to query %v via ip-api: status: %v, message: %v", address, geo.Status, geo.Message)
 	}
 
-	var locations []string
-	for _, s := range []string{geo.CountryName, geo.RegionName, geo.City} {
-		if strings.TrimSpace(s) != "" {
-			locations = append(locations, s)
-		}
-	}
-	location := strings.Join(locations, ", ")
-	if location == "" {
-		location = "Unknown"
-	}
-	country := geo.CountryName
-	if country == "" {
-		country = "Unknown"
-	}
 	gh := geohash.EncodeAuto(geo.Latitude, geo.Longitude)
+	country := composeCountry(geo.CountryName)
+	location := composeLocation(geo.CountryName, geo.RegionName, geo.City)
 
 	return gh, country, location, nil
 }
@@ -151,8 +148,9 @@ func geohashAndLocationFromMaxMindDb(address string) (string, string, string, er
 		return "s000", "Unknown", "Unknown", err
 	}
 	gh := geohash.EncodeAuto(record.Location.Latitude, record.Location.Longitude)
-	country := record.Country.Names["en"]
-	location := record.City.Names["en"]
+	country := composeCountry(record.Country.Names["en"])
+	location := composeLocation(record.Country.Names["en"], "", record.City.Names["en"])
+
 	return gh, country, location, nil
 }
 
