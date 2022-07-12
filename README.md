@@ -52,7 +52,7 @@ Usage of ./endlessh-go
   -geoip_supplier string
         Supplier to obtain Geohash of IPs. Possible values are "off", "ip-api", "freegeoip", "max-mind-db" (default "off")
   -host string
-        Listening address (default "0.0.0.0")
+        SSH listening address (default "0.0.0.0")
   -interval_ms int
         Message millisecond delay (default 1000)
   -line_length int
@@ -68,9 +68,11 @@ Usage of ./endlessh-go
   -max_mind_db string
         Path to the MaxMind DB file.
   -port string
-        Listening port (default "2222")
+        SSH listening port (default "2222")
   -prometheus_entry string
         Entry point for prometheus (default "metrics")
+  -prometheus_host string
+        The address for prometheus (default "0.0.0.0")
   -prometheus_port string
         The port for prometheus (default "2112")
   -stderrthreshold value
