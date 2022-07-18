@@ -73,14 +73,39 @@
       }
     ]
   },
-  "description": "Dashboard for endlessh (add option All to job and host)",
+  "description": "Dashboard for endlessh",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "gnetId": 15156,
   "graphTooltip": 0,
   "id": null,
   "iteration": 1645482521172,
-  "links": [],
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "GitHub",
+      "tooltip": "GitHub",
+      "type": "link",
+      "url": "https://github.com/shizunge/endlessh-go"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "Grafana",
+      "tooltip": "Grafana Dashboard",
+      "type": "link",
+      "url": "https://grafana.com/grafana/dashboards/15156"
+    }
+  ],
   "liveNow": false,
   "panels": [
     {
@@ -1461,6 +1486,6 @@
   "timezone": "",
   "title": "Endlessh",
   "uid": "ATIxYkO7k",
-  "version": 7,
+  "version": 8,
   "weekStart": ""
 }
