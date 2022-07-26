@@ -44,7 +44,7 @@ var (
 	clientSeconds         *prometheus.CounterVec
 )
 
-func initPrometheus(connHost, prometheusPort, prometheusEntry string) {
+func initPrometheus(prometheusHost, prometheusPort, prometheusEntry string) {
 	totalClients = prometheus.NewCounterFunc(
 		prometheus.CounterOpts{
 			Name: "endlessh_client_open_count_total",
@@ -99,8 +99,8 @@ func initPrometheus(connHost, prometheusPort, prometheusEntry string) {
 	prometheus.MustRegister(clientSeconds)
 	http.Handle("/"+prometheusEntry, promhttp.Handler())
 	go func() {
-		glog.Infof("Starting Prometheus on %v:%v, entry point is /%v", connHost, prometheusPort, prometheusEntry)
-		http.ListenAndServe(connHost+":"+prometheusPort, nil)
+		glog.Infof("Starting Prometheus on %v:%v, entry point is /%v", prometheusHost, prometheusPort, prometheusEntry)
+		http.ListenAndServe(prometheusHost+":"+prometheusPort, nil)
 	}()
 }
 
@@ -109,9 +109,10 @@ func main() {
 	bannerMaxLength := flag.Int64("line_length", 32, "Maximum banner line length")
 	maxClients := flag.Int64("max_clients", 4096, "Maximum number of clients")
 	connType := flag.String("conn_type", "tcp", "Connection type. Possible values are tcp, tcp4, tcp6")
-	connHost := flag.String("host", "0.0.0.0", "Listening address")
-	connPort := flag.String("port", "2222", "Listening port")
+	connHost := flag.String("host", "0.0.0.0", "SSH listening address")
+	connPort := flag.String("port", "2222", "SSH listening port")
 	prometheusEnabled := flag.Bool("enable_prometheus", false, "Enable prometheus")
+	prometheusHost := flag.String("prometheus_host", "0.0.0.0", "The address for prometheus")
 	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
 	prometheusEntry := flag.String("prometheus_entry", "metrics", "Entry point for prometheus")
 	geoipSupplier := flag.String("geoip_supplier", "off", "Supplier to obtain Geohash of IPs. Possible values are \"off\", \"ip-api\", \"freegeoip\", \"max-mind-db\"")
@@ -123,8 +124,11 @@ func main() {
 	}
 	flag.Parse()
 
+	if *connType == "tcp6" && *prometheusHost == "0.0.0.0" {
+		*prometheusHost = "[::]"
+	}
 	if *prometheusEnabled {
-		initPrometheus(*connHost, *prometheusPort, *prometheusEntry)
+		initPrometheus(*prometheusHost, *prometheusPort, *prometheusEntry)
 	}
 
 	rand.Seed(time.Now().UnixNano())
