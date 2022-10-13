@@ -50,7 +50,7 @@ jobs:
           push: true
           tags: |
             ${{ github.repository }}:${{ steps.git.outputs.image_tag }}
-            ${{ github.repository }}:develop
+            ${{ github.repository }}:development
             ghcr.io/${{ github.repository }}:${{ steps.git.outputs.image_tag }}
-            ghcr.io/${{ github.repository }}:develop
+            ghcr.io/${{ github.repository }}:development
 
