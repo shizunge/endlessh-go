@@ -2,7 +2,7 @@
 
 A golang implementation of [endlessh](https://nullprogram.com/blog/2019/03/22/) exporting Prometheus metrics, visualized by a Grafana dashboard.
 
-![screenshot](https://github.com/shizunge/endlessh-go/raw/master/dashboard/screenshot.png)
+![screenshot](https://github.com/shizunge/endlessh-go/raw/main/dashboard/screenshot.png)
 
 ## Introduction
 
