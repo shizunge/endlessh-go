@@ -44,7 +44,7 @@ jobs:
           password: ${{ github.token }}
         
       - name: Build and push ${{ github.repository }}:${{ steps.git.outputs.image_tag }}
-        uses: docker/build-push-action@v3.2.0
+        uses: docker/build-push-action@v3.3.0
         with:
           platforms: ${{ env.PLATFORMS }}
           push: true
