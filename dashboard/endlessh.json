@@ -9,7 +9,7 @@
       "pluginName": "Prometheus"
     }
   ],
-  "__elements": [],
+  "__elements": {},
   "__requires": [
     {
       "type": "panel",
@@ -21,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "8.3.6"
+      "version": "9.3.6"
     },
     {
       "type": "panel",
@@ -58,7 +58,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -73,13 +76,12 @@
       }
     ]
   },
-  "description": "Dashboard for endlessh",
-  "editable": true,
+  "description": "Dashboard for endlessh (Update variables on time range changes)",
+  "editable": false,
   "fiscalYearStartMonth": 0,
   "gnetId": 15156,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1645482521172,
   "links": [
     {
       "asDropdown": false,
@@ -153,7 +155,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.3.6",
+      "pluginVersion": "9.3.6",
       "targets": [
         {
           "datasource": {
@@ -277,7 +279,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.3.6",
+      "pluginVersion": "9.3.6",
       "targets": [
         {
           "datasource": {
@@ -402,7 +404,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.3.6",
+      "pluginVersion": "9.3.6",
       "targets": [
         {
           "datasource": {
@@ -465,7 +467,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.3.6",
+      "pluginVersion": "9.3.6",
       "targets": [
         {
           "datasource": {
@@ -578,7 +580,7 @@
         "text": {},
         "textMode": "value"
       },
-      "pluginVersion": "8.3.6",
+      "pluginVersion": "9.3.6",
       "targets": [
         {
           "datasource": {
@@ -722,7 +724,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.3.6",
+      "pluginVersion": "9.3.6",
       "targets": [
         {
           "datasource": {
@@ -751,6 +753,8 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
@@ -802,15 +806,21 @@
       "options": {
         "legend": {
           "calcs": [],
-          "displayMode": "hidden",
-          "placement": "bottom"
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
         {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
           "panelId": 20,
           "refId": "A"
         }
@@ -851,6 +861,7 @@
         "legend": {
           "displayMode": "table",
           "placement": "right",
+          "showLegend": true,
           "values": [
             "value",
             "percent"
@@ -865,7 +876,8 @@
           "values": false
         },
         "tooltip": {
-          "mode": "single"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -961,6 +973,13 @@
           "color": {
             "mode": "continuous-GrYlRd"
           },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -992,6 +1011,7 @@
           "mouseWheelZoom": false,
           "showAttribution": false,
           "showDebug": false,
+          "showMeasure": false,
           "showScale": false,
           "showZoom": true
         },
@@ -1037,14 +1057,18 @@
             "type": "markers"
           }
         ],
+        "tooltip": {
+          "mode": "details"
+        },
         "view": {
+          "allLayers": true,
           "id": "zero",
           "lat": 0,
           "lon": 0,
           "zoom": 1
         }
       },
-      "pluginVersion": "8.3.6",
+      "pluginVersion": "9.3.6",
       "targets": [
         {
           "datasource": {
@@ -1139,6 +1163,7 @@
             "align": "auto",
             "displayMode": "auto",
             "filterable": true,
+            "inspect": false,
             "minWidth": 50
           },
           "links": [],
@@ -1230,7 +1255,7 @@
           }
         ]
       },
-      "pluginVersion": "8.3.6",
+      "pluginVersion": "9.3.6",
       "targets": [
         {
           "datasource": {
@@ -1421,7 +1446,7 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 34,
+  "schemaVersion": 37,
   "style": "dark",
   "tags": [
     "prometheus"
@@ -1486,6 +1511,6 @@
   "timezone": "",
   "title": "Endlessh",
   "uid": "ATIxYkO7k",
-  "version": 8,
+  "version": 9,
   "weekStart": ""
 }
