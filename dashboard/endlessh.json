@@ -1471,7 +1471,7 @@
           "query": "label_values(endlessh_client_open_count_total, job)",
           "refId": "StandardVariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 1,
@@ -1495,7 +1495,7 @@
           "query": "label_values(endlessh_client_open_count_total{job=~\"$job\"}, instance)",
           "refId": "StandardVariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 1,
@@ -1511,6 +1511,6 @@
   "timezone": "",
   "title": "Endlessh",
   "uid": "ATIxYkO7k",
-  "version": 9,
+  "version": 10,
   "weekStart": ""
 }
