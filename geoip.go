@@ -106,6 +106,10 @@ func geohashAndLocationFromMaxMindDb(address string) (string, string, string, er
 	ip := net.ParseIP(address)
 	record, err := db.City(ip)
 	if err != nil {
+		// In case of using Country DB, city is not available.
+		record, err = db.Country(ip)
+	}
+	if err != nil {
 		return "s000", "Unknown", "Unknown", err
 	}
 	gh := geohash.EncodeAuto(record.Location.Latitude, record.Location.Longitude)
