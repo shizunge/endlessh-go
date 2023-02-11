@@ -115,7 +115,7 @@ func main() {
 	prometheusHost := flag.String("prometheus_host", "0.0.0.0", "The address for prometheus")
 	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
 	prometheusEntry := flag.String("prometheus_entry", "metrics", "Entry point for prometheus")
-	geoipSupplier := flag.String("geoip_supplier", "off", "Supplier to obtain Geohash of IPs. Possible values are \"off\", \"ip-api\", \"freegeoip\", \"max-mind-db\"")
+	geoipSupplier := flag.String("geoip_supplier", "off", "Supplier to obtain Geohash of IPs. Possible values are \"off\", \"ip-api\", \"max-mind-db\"")
 	maxMindDbFileName = flag.String("max_mind_db", "", "Path to the MaxMind DB file.")
 
 	flag.Usage = func() {

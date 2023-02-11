@@ -53,45 +53,6 @@ func composeCountry(country string) string {
 	return country
 }
 
-type freegeoip struct {
-	Ip          string  `json:"ip"`
-	CountryCode string  `json:"country_code"`
-	CountryName string  `json:"country_name"`
-	RegionCode  string  `json:"region_code"`
-	RegionName  string  `json:"region_name"`
-	City        string  `json:"city"`
-	Zipcode     string  `json:"zipcode"`
-	Latitude    float64 `json:"latitude"`
-	Longitude   float64 `json:"longitude"`
-	MetroCode   int     `json:"metro_code"`
-	AreaCode    int     `json:"area_code"`
-}
-
-func geohashAndLocationFromFreegeoip(address string) (string, string, string, error) {
-	var geo freegeoip
-	response, err := http.Get("https://freegeoip.live/json/" + address)
-	if err != nil {
-		return "s000", "Unknown", "Unknown", err
-	}
-	defer response.Body.Close()
-
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return "s000", "Unknown", "Unknown", err
-	}
-
-	err = json.Unmarshal(body, &geo)
-	if err != nil {
-		return "s000", "Unknown", "Unknown", err
-	}
-
-	gh := geohash.EncodeAuto(geo.Latitude, geo.Longitude)
-	country := composeCountry(geo.CountryName)
-	location := composeLocation(geo.CountryName, geo.RegionName, geo.City)
-
-	return gh, country, location, nil
-}
-
 type ipapi struct {
 	Status      string  `json:"status"`
 	Message     string  `json:"message"`
@@ -160,8 +121,6 @@ func geohashAndLocation(address string, geoipSupplier string) (string, string, s
 		return "s000", "Geohash off", "Geohash off", nil
 	case "ip-api":
 		return geohashAndLocationFromIpapi(address)
-	case "freegeoip":
-		return geohashAndLocationFromFreegeoip(address)
 	case "max-mind-db":
 		return geohashAndLocationFromMaxMindDb(address)
 	default:

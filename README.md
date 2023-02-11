@@ -100,7 +100,7 @@ The metrics is off by default, you can turn it via the CLI argument `-enable_pro
 
 It listens to port `2112` and entry point is `/metrics` by default. The port and entry point can be changed via CLI arguments.
 
-The endlessh-go server stores the geohash of attackers as a label on `endlessh_client_open_count`, which is also off by default. You can turn it on via the CLI argument `-geoip_supplier`. The endlessh-go uses service from either [ip-api](https://ip-api.com/) or [freegeoip](https://freegeoip.live/), which may enforce a query rate and limit commercial use. Visit their website for their terms and policies.
+The endlessh-go server stores the geohash of attackers as a label on `endlessh_client_open_count`, which is also off by default. You can turn it on via the CLI argument `-geoip_supplier`. The endlessh-go uses service from [ip-api](https://ip-api.com/), which may enforce a query rate and limit commercial use. Visit their website for their terms and policies.
 
 You could also use an offline GeoIP database from [MaxMind](https://www.maxmind.com) by setting `-geoip_supplier` to *max-mind-db* and `-max_mind_db` to the path of the database file.
 
