@@ -133,8 +133,10 @@ func geohashAndLocationFromMaxMindDb(address string) (string, string, string, er
 			latitude = loc.Latitude
 			longitude = loc.Longitude
 		} else {
-			// For debugging, adding the iso to the country name.
-			countryName = countryName + " (" + iso + ")"
+			if iso != "" {
+				// For debugging, adding the iso to the country name.
+				countryName = countryName + " (" + iso + ")"
+			}
 		}
 	}
 	gh := geohash.EncodeAuto(latitude, longitude)
