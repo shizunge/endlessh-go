@@ -22,7 +22,7 @@ go build .
 Alternatively, you can use the [docker image](https://hub.docker.com/r/shizunge/endlessh-go):
 
 ```
-sudo docker run -d -p 2222:2222 shizunge/endlessh-go -logtostderr -v=1
+docker run -d -p 2222:2222 shizunge/endlessh-go -logtostderr -v=1
 ```
 
 It listens to port `2222` by default.
@@ -32,6 +32,8 @@ Then you can try to connect to the endlessh server. Your SSH client should hang 
 ```
 ssh -p 2222 localhost
 ```
+
+The default container user has uid/gid 2000.
 
 If you want log like the [C implementation](https://github.com/skeeto/endlessh), you need to set both CLI arguments `-logtostderr` and `-v=1`, then the log will go to stderr. You can set different log destinations via CLI arguments.
 
@@ -50,7 +52,7 @@ Usage of ./endlessh-go
   -enable_prometheus
         Enable prometheus
   -geoip_supplier string
-        Supplier to obtain Geohash of IPs. Possible values are "off", "ip-api", "freegeoip", "max-mind-db" (default "off")
+        Supplier to obtain Geohash of IPs. Possible values are "off", "ip-api", "max-mind-db" (default "off")
   -host string
         SSH listening address (default "0.0.0.0")
   -interval_ms int
@@ -83,18 +85,26 @@ Usage of ./endlessh-go
         comma-separated list of pattern=N settings for file-filtered logging
 ```
 
+## Using privileged ports (<1024)
+
+If you want to run the image with privileged ports (below 1025), you need to set the container user to root:
+
+```yml
+user: root
+```
+
 ## Metrics
 
 Endlessh-go exports the following Prometheus metrics.
 
-| Metric                               | Type  | Description  |
-|--------------------------------------|-------|--------------|
-| endlessh_client_open_count_total     | count | Total number of clients that tried to connect to this host. |
-| endlessh_client_closed_count_total   | count | Total number of clients that stopped connecting to this host. |
-| endlessh_sent_bytes_total            | count | Total bytes sent to clients that tried to connect to this host. |
-| endlessh_trapped_time_seconds_total  | count | Total seconds clients spent on endlessh. |
-| endlessh_client_open_count           | count | Number of connections of clients. <br> Labels: <br> <ul><li> `ip`: IP of the client </li> <li>  `country`: Country of the IP </li> <li>  `location`: Country, Region, and City </li> <li>  `geohash`: Geohash of the location </li></ul> |
-| endlessh_client_trapped_time_seconds | count | Seconds a client spends on endlessh. <br> Labels: <br> <ul><li>  `ip`: IP of the client </li></ul> |
+| Metric                               | Type  | Description                                                                                                                                                                                                                           |
+| ------------------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| endlessh_client_open_count_total     | count | Total number of clients that tried to connect to this host.                                                                                                                                                                           |
+| endlessh_client_closed_count_total   | count | Total number of clients that stopped connecting to this host.                                                                                                                                                                         |
+| endlessh_sent_bytes_total            | count | Total bytes sent to clients that tried to connect to this host.                                                                                                                                                                       |
+| endlessh_trapped_time_seconds_total  | count | Total seconds clients spent on endlessh.                                                                                                                                                                                              |
+| endlessh_client_open_count           | count | Number of connections of clients. <br> Labels: <br> <ul><li> `ip`: IP of the client </li> <li> `country`: Country of the IP </li> <li> `location`: Country, Region, and City </li> <li> `geohash`: Geohash of the location </li></ul> |
+| endlessh_client_trapped_time_seconds | count | Seconds a client spends on endlessh. <br> Labels: <br> <ul><li> `ip`: IP of the client </li></ul>                                                                                                                                     |
 
 The metrics is off by default, you can turn it via the CLI argument `-enable_prometheus`.
 
@@ -102,7 +112,7 @@ It listens to port `2112` and entry point is `/metrics` by default. The port and
 
 The endlessh-go server stores the geohash of attackers as a label on `endlessh_client_open_count`, which is also off by default. You can turn it on via the CLI argument `-geoip_supplier`. The endlessh-go uses service from [ip-api](https://ip-api.com/), which may enforce a query rate and limit commercial use. Visit their website for their terms and policies.
 
-You could also use an offline GeoIP database from [MaxMind](https://www.maxmind.com) by setting `-geoip_supplier` to *max-mind-db* and `-max_mind_db` to the path of the database file.
+You could also use an offline GeoIP database from [MaxMind](https://www.maxmind.com) by setting `-geoip_supplier` to _max-mind-db_ and `-max_mind_db` to the path of the database file.
 
 ## Dashboard
 
@@ -113,7 +123,6 @@ You can import the dashboard from Grafana.com using ID [15156](https://grafana.c
 The dashboard visualizes data for the selected time range.
 
 The IP addresses are clickable and link you to the [ARIN](https://www.arin.net/) database.
-
 
 ## Contacts
 

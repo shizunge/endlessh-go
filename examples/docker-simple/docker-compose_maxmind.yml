@@ -1,0 +1,36 @@
+version: "3"
+services:
+
+  endlessh:
+    container_name: endlessh
+    image: shizunge/endlessh-go:latest
+    restart: unless-stopped
+    #user: root
+    command:
+      - "-logtostderr"
+      - "-v=1"
+      - "-geoip_supplier=max-mind-db"
+      - "-max_mind_db=/geo-data/GeoLite2-City.mmdb"
+    networks:
+      - example_network
+    ports:
+      - 2222:2222 # SSH port
+      - 127.0.0.1:2112:2112 # Prometheus metrics port
+    volumes:
+      - ./geo-data/:/geo-data/:ro # geoip data
+
+  geoipupdate:
+    image: ghcr.io/maxmind/geoipupdate:v5
+    container_name: geoipupdate
+    restart: unless-stopped
+    security_opt: [ "no-new-privileges:true" ]
+    volumes:
+      - ./geo-data/:/usr/share/GeoIP/
+    environment:
+      - GEOIPUPDATE_EDITION_IDS=GeoLite2-City
+      - GEOIPUPDATE_FREQUENCY=72
+      - GEOIPUPDATE_ACCOUNT_ID=xxxxxx
+      - GEOIPUPDATE_LICENSE_KEY=xxxxxx
+
+networks:
+  example_network:

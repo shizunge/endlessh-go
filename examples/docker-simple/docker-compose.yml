@@ -1,5 +1,6 @@
 version: '3.5'
 services:
+
   endlessh:
     container_name: endlessh
     image: shizunge/endlessh-go:latest
@@ -13,16 +14,14 @@ services:
     networks:
       - example_network
     ports:
-      # SSH port
-      - 2222:2222
-      # Prometheus metrics port
-      - 127.0.0.1:2112:2112
+      - 2222:2222 # SSH port
+      - 127.0.0.1:2112:2112 # Prometheus metrics port
 
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
     restart: always
-    command: 
+    command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
       - --storage.tsdb.retention.time=45d
@@ -54,6 +53,7 @@ services:
 
 networks:
   example_network:
+
 
 volumes:
   prometheus:
