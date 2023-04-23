@@ -22,7 +22,7 @@ go build .
 Alternatively, you can use the [docker image](https://hub.docker.com/r/shizunge/endlessh-go):
 
 ```
-sudo docker run -d -p 2222:2222 shizunge/endlessh-go -logtostderr -v=1
+docker run -d -p 2222:2222 shizunge/endlessh-go -logtostderr -v=1
 ```
 
 It listens to port `2222` by default.
@@ -50,7 +50,7 @@ Usage of ./endlessh-go
   -enable_prometheus
         Enable prometheus
   -geoip_supplier string
-        Supplier to obtain Geohash of IPs. Possible values are "off", "ip-api", "freegeoip", "max-mind-db" (default "off")
+        Supplier to obtain Geohash of IPs. Possible values are "off", "ip-api", "max-mind-db" (default "off")
   -host string
         SSH listening address (default "0.0.0.0")
   -interval_ms int
@@ -102,7 +102,7 @@ It listens to port `2112` and entry point is `/metrics` by default. The port and
 
 The endlessh-go server stores the geohash of attackers as a label on `endlessh_client_open_count`, which is also off by default. You can turn it on via the CLI argument `-geoip_supplier`. The endlessh-go uses service from [ip-api](https://ip-api.com/), which may enforce a query rate and limit commercial use. Visit their website for their terms and policies.
 
-You could also use an offline GeoIP database from [MaxMind](https://www.maxmind.com) by setting `-geoip_supplier` to *max-mind-db* and `-max_mind_db` to the path of the database file.
+You could also use an offline GeoIP database from [MaxMind](https://www.maxmind.com) by setting `-geoip_supplier` to _max-mind-db_ and `-max_mind_db` to the path of the database file.
 
 ## Dashboard
 
@@ -113,7 +113,6 @@ You can import the dashboard from Grafana.com using ID [15156](https://grafana.c
 The dashboard visualizes data for the selected time range.
 
 The IP addresses are clickable and link you to the [ARIN](https://www.arin.net/) database.
-
 
 ## Contacts
 
