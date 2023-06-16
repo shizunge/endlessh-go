@@ -10,10 +10,9 @@ An example how to setup endlessh-go, Prometheus, and Grafana using [docker compo
 
 An example how to setup endlessh-go with the Maxmind GeoIP Database.
 
-### Using privileged ports (<1024) on docker
+## FAQ
+### Bind to privileged ports (<1024) in a container
 
-If you want to run the image with privileged ports (below 1025), you need to set the container user to root:
+You need to add capability `NET_BIND_SERVICE` to the program.
 
-```yml
-user: root
-```
+If you are using docker, this can be done via cli argument [`--cap-add`](https://docs.docker.com/engine/reference/run/#runtime-privilege-and-linux-capabilities) or [`cap_add`](https://docs.docker.com/compose/compose-file/compose-file-v3/#cap_add-cap_drop) in the docker compose file.
