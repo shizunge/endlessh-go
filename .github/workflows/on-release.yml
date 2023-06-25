@@ -1,10 +1,9 @@
-name: Build docker image and push to docker hub on push
+name: On release
 
 on:
-  push:
-    branches:
-      - main
-
+  release:
+    types: # This configuration does not affect the page_build event above
+      - created
 env:
   PLATFORMS: "linux/amd64,linux/arm64,linux/arm/v7"
   
@@ -20,9 +19,8 @@ jobs:
         id: git
         shell: bash
         run: |
-          RELEASE_VERSION="dev-$(date +%s)"
-          echo "::set-output name=image_tag::${RELEASE_VERSION}"
-          echo "Action image_tag=${RELEASE_VERSION}"
+          RELEASE_VERSION=${GITHUB_REF#refs/*/}
+          echo "image_tag=${RELEASE_VERSION}" >> ${GITHUB_OUTPUT}
       
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -50,7 +48,14 @@ jobs:
           push: true
           tags: |
             ${{ github.repository }}:${{ steps.git.outputs.image_tag }}
-            ${{ github.repository }}:development
+            ${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ steps.git.outputs.image_tag }}
-            ghcr.io/${{ github.repository }}:development
+            ghcr.io/${{ github.repository }}:latest
 
+      - name: Update dockerhub description
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: ${{ github.repository }}
+          short-description: ${{ github.event.repository.description }}
