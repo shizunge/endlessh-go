@@ -3,9 +3,8 @@ FROM golang AS build
 RUN mkdir /endlessh
 ADD . /endlessh
 WORKDIR /endlessh
-RUN export CGO_ENABLED=0
 RUN go mod tidy
-RUN go build -o endlessh .
+RUN CGO_ENABLED=0 go build -o endlessh .
 
 FROM gcr.io/distroless/base
 
