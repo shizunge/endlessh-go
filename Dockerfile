@@ -3,7 +3,7 @@ FROM golang AS build
 RUN mkdir /endlessh
 ADD . /endlessh
 WORKDIR /endlessh
-RUN CGO_ENABLED=1
+RUN export CGO_ENABLED=0
 RUN go mod tidy
 RUN go build -o endlessh .
 
