@@ -75,7 +75,7 @@ jobs:
           cut-off: One hour ago UTC
           account-type: personal
           token: ${{ secrets.TOKEN_DELETE_GHCR_IMAGES }}
-          keep-at-least: 1
+          keep-at-least: 0
           untagged-only: True
           skip-tags: latest, development
           dry-run: False
