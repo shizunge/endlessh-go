@@ -71,7 +71,7 @@ jobs:
       - name: Delete untagged images
         uses: snok/container-retention-policy@v2
         with:
-          image-names: gantry
+          image-names: endlessh-go
           cut-off: One hour ago UTC
           account-type: personal
           token: ${{ secrets.TOKEN_DELETE_GHCR_IMAGES }}
