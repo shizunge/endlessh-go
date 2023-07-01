@@ -68,4 +68,15 @@ jobs:
           skip-tags: latest, development
           filter-tags: "dev-*"
           dry-run: False
+      - name: Delete untagged images
+        uses: snok/container-retention-policy@v2
+        with:
+          image-names: gantry
+          cut-off: One hour ago UTC
+          account-type: personal
+          token: ${{ secrets.TOKEN_DELETE_GHCR_IMAGES }}
+          keep-at-least: 1
+          untagged-only: True
+          skip-tags: latest, development
+          dry-run: False
 
