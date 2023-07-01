@@ -53,10 +53,14 @@ jobs:
             ghcr.io/${{ github.repository }}:${{ steps.git.outputs.image_tag }}
             ghcr.io/${{ github.repository }}:development
 
+  clean-ghcr:
+    name: Delete old dev container images
+    runs-on: ubuntu-latest
+    steps:
       - name: Delete old dev images
         uses: snok/container-retention-policy@v2
         with:
-          image-names: gantry
+          image-names: endlessh-go
           cut-off: One day ago UTC
           account-type: personal
           token: ${{ secrets.TOKEN_DELETE_GHCR_IMAGES }}
