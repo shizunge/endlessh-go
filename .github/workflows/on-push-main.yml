@@ -15,14 +15,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
+
       - name: Extract tag string
         id: git
         shell: bash
         run: |
           RELEASE_VERSION="dev-$(date +%s)"
           echo "image_tag=${RELEASE_VERSION}" >> ${GITHUB_OUTPUT}
-      
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
         
@@ -41,7 +41,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ github.token }}
-        
+
       - name: Build and push ${{ github.repository }}:${{ steps.git.outputs.image_tag }}
         uses: docker/build-push-action@v4.1.1
         with:
@@ -52,4 +52,16 @@ jobs:
             ${{ github.repository }}:development
             ghcr.io/${{ github.repository }}:${{ steps.git.outputs.image_tag }}
             ghcr.io/${{ github.repository }}:development
+
+      - name: Delete old dev images
+        uses: snok/container-retention-policy@v2
+        with:
+          image-names: gantry
+          cut-off: One day ago UTC
+          account-type: personal
+          token: ${{ secrets.TOKEN_DELETE_GHCR_IMAGES }}
+          keep-at-least: 5
+          skip-tags: latest, development
+          filter-tags: "dev-*"
+          dry-run: False
 
