@@ -1,0 +1,22 @@
+name: Update Docker Hub description
+
+on:
+  release:
+    types:
+      - created
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Update Docker Hub description
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Update Docker Hub description
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: ${{ github.repository }}
+          short-description: ${{ github.event.repository.description }}
