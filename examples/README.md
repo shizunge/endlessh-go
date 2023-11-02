@@ -2,11 +2,11 @@
 
 > The default container user has uid 65534.
 
-## [docker-simple](./examples/docker-simple)
+## [docker-simple](./docker-simple)
 
 An example how to setup endlessh-go, Prometheus, and Grafana using [docker compose](https://docs.docker.com/compose/).
 
-## [docker-maxmind](./examples/docker-maxmind)
+## [docker-maxmind](./docker-maxmind)
 
 An example how to setup endlessh-go with the Maxmind GeoIP Database.
 
