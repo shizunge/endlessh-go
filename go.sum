@@ -22,9 +22,12 @@ github.com/oschwald/geoip2-golang v1.9.0 h1:uvD3O6fXAXs+usU+UGExshpdP13GAqp4GBrz
 github.com/oschwald/geoip2-golang v1.9.0/go.mod h1:BHK6TvDyATVQhKNbQBdrj9eAvuwOMi2zSFXizL3K81Y=
 github.com/oschwald/maxminddb-golang v1.11.0 h1:aSXMqYR/EPNjGE8epgqwDay+P30hCBZIveY0WZbAWh0=
 github.com/oschwald/maxminddb-golang v1.11.0/go.mod h1:YmVI+H0zh3ySFR3w+oz8PCfglAFj3PuCmui13+P9zDg=
-github.com/pierrre/compare v1.1.0 h1:57z388tk9GXcyLnLXh1pMRdCQrfUH056x9dyNCCZZtg=
-github.com/pierrre/geohash v1.1.0 h1:AeTekkssK2HV3le9vya4cVFIPMx60bVIHaTvC+/5vyc=
-github.com/pierrre/geohash v1.1.0/go.mod h1:QQAU8mXr7WIhJJqL2uAvhJHrMeH/jLeETutCqY/fDeU=
+github.com/pierrre/assert v0.3.2 h1:wXdlkVN5FVSLEKl6pGijcCYkldgfjRgyheU3C1/by9Q=
+github.com/pierrre/compare v1.4.2 h1:oabIiWclzAlXG7S/2MYSFDJ/vR34oa/MYrBZh5PNU80=
+github.com/pierrre/geohash v1.1.1 h1:XCkvOyv/uesenMPhkvsCfIiUalBmGdHlFY0bIWTqb+s=
+github.com/pierrre/geohash v1.1.1/go.mod h1:ucAm7cbgGBoVr6cr1t+d3ea5XQ9P5zKHXfS1Qy2iKVY=
+github.com/pierrre/go-libs v0.2.14 h1:wAPoOrslKLnha6ow5EKkxxZpo76kOea57efs71A/ZnQ=
+github.com/pierrre/pretty v0.0.10 h1:Cb5som+1EpU+x7UA5AMy9I8AY2XkzMBywkLEAdo1JDg=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/prometheus/client_golang v1.17.0 h1:rl2sfwZMtSthVU752MqfjQozy7blglC+1SOtjMAMh+Q=
 github.com/prometheus/client_golang v1.17.0/go.mod h1:VeL+gMmOAxkS2IqfCq0ZmHSL+LjWfWDUmp1mBz9JgUY=
@@ -35,7 +38,7 @@ github.com/prometheus/common v0.44.0/go.mod h1:ofAIvZbQ1e/nugmZGz4/qCb9Ap1VoSTIO
 github.com/prometheus/procfs v0.11.1 h1:xRC8Iq1yyca5ypa9n1EZnWZkt7dwcoRPQwX/5gwaUuI=
 github.com/prometheus/procfs v0.11.1/go.mod h1:eesXgaPo1q7lBpVMoMy0ZOFTth9hBn4W/y0/p/ScXhY=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
-github.com/the42/cartconvert v0.0.0-20131203171324-aae784c392b8 h1:I4DY8wLxJXCrMYzDM6lKCGc3IQwJX0PlTLsd3nQqI3c=
+github.com/the42/cartconvert v1.0.0 h1:g8kt6ic2GEhdcZ61ZP9GsWwhosVo5nCnH1n2/oAQXUU=
 golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sys v0.11.0 h1:eG7RXZHdqOJ1i+0lgLgCpSXAp6M3LYlAo6osgSi0xOM=
 golang.org/x/sys v0.11.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
