@@ -3,7 +3,7 @@ module endlessh-go
 go 1.20
 
 require (
-	github.com/golang/glog v1.1.2
+	github.com/golang/glog v1.2.0
 	github.com/oschwald/geoip2-golang v1.9.0
 	github.com/pierrre/geohash v1.1.1
 	github.com/prometheus/client_golang v1.17.0
