@@ -91,13 +91,15 @@ func initPrometheus(prometheusHost, prometheusPort, prometheusEntry string) {
 		},
 		[]string{"ip"},
 	)
-	prometheus.MustRegister(totalClients)
-	prometheus.MustRegister(totalClientsClosed)
-	prometheus.MustRegister(totalBytes)
-	prometheus.MustRegister(totalSeconds)
-	prometheus.MustRegister(clientIP)
-	prometheus.MustRegister(clientSeconds)
-	http.Handle("/"+prometheusEntry, promhttp.Handler())
+	promReg := prometheus.NewRegistry()
+	promReg.MustRegister(totalClients)
+	promReg.MustRegister(totalClientsClosed)
+	promReg.MustRegister(totalBytes)
+	promReg.MustRegister(totalSeconds)
+	promReg.MustRegister(clientIP)
+	promReg.MustRegister(clientSeconds)
+	handler := promhttp.HandlerFor(promReg, promhttp.HandlerOpts{EnableOpenMetrics: false})
+	http.Handle("/"+prometheusEntry, handler)
 	go func() {
 		glog.Infof("Starting Prometheus on %v:%v, entry point is /%v", prometheusHost, prometheusPort, prometheusEntry)
 		http.ListenAndServe(prometheusHost+":"+prometheusPort, nil)
