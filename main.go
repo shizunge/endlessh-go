@@ -98,7 +98,7 @@ func initPrometheus(prometheusHost, prometheusPort, prometheusEntry string) {
 	promReg.MustRegister(totalSeconds)
 	promReg.MustRegister(clientIP)
 	promReg.MustRegister(clientSeconds)
-	handler := promhttp.HandlerFor(promReg, promhttp.HandlerOpts{EnableOpenMetrics: false})
+	handler := promhttp.HandlerFor(promReg, promhttp.HandlerOpts{EnableOpenMetrics: true})
 	http.Handle("/"+prometheusEntry, handler)
 	go func() {
 		glog.Infof("Starting Prometheus on %v:%v, entry point is /%v", prometheusHost, prometheusPort, prometheusEntry)
