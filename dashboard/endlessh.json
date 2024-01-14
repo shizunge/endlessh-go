@@ -21,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "9.3.6"
+      "version": "10.3.0-64399"
     },
     {
       "type": "panel",
@@ -76,7 +76,7 @@
       }
     ]
   },
-  "description": "Dashboard for endlessh (Update variables on time range changes)",
+  "description": "Dashboard for endlessh (Load metrics at the first panel instead of the last panel)",
   "editable": false,
   "fiscalYearStartMonth": 0,
   "gnetId": 15156,
@@ -112,8 +112,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "datasource",
-        "uid": "-- Dashboard --"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "fieldConfig": {
         "defaults": {
@@ -140,6 +140,8 @@
         "y": 0
       },
       "id": 36,
+      "interval": "1m",
+      "maxDataPoints": 1440,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -153,17 +155,37 @@
           "values": false
         },
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "9.3.6",
+      "pluginVersion": "10.3.0-64399",
       "targets": [
         {
           "datasource": {
-            "type": "datasource",
-            "uid": "-- Dashboard --"
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
           },
-          "panelId": 49,
-          "refId": "A"
+          "editorMode": "code",
+          "expr": "(endlessh_client_open_count{instance=~\"$host\",job=~\"$job\"} - endlessh_client_open_count{instance=~\"$host\",job=~\"$job\"} offset $__interval) > 0 or (endlessh_client_open_count{instance=~\"$host\",job=~\"$job\"}!=0 unless endlessh_client_open_count{instance=~\"$host\",job=~\"$job\"} offset $__interval)",
+          "format": "table",
+          "instant": false,
+          "legendFormat": "Seen {{ip}}",
+          "range": true,
+          "refId": "Seen"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "(endlessh_client_trapped_time_seconds{instance=~\"$host\",job=~\"$job\"} - endlessh_client_trapped_time_seconds{instance=~\"$host\",job=~\"$job\"} offset $__interval) > 0 or (endlessh_client_trapped_time_seconds{instance=~\"$host\",job=~\"$job\"}!=0 unless endlessh_client_trapped_time_seconds{instance=~\"$host\",job=~\"$job\"} offset $__interval)",
+          "format": "table",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Trapped {{ip}}",
+          "range": true,
+          "refId": "Trapped"
         }
       ],
       "title": "Connections",
@@ -277,16 +299,17 @@
           "values": false
         },
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "9.3.6",
+      "pluginVersion": "10.3.0-64399",
       "targets": [
         {
           "datasource": {
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 49,
+          "panelId": 36,
           "refId": "A"
         }
       ],
@@ -402,9 +425,10 @@
           "values": false
         },
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "9.3.6",
+      "pluginVersion": "10.3.0-64399",
       "targets": [
         {
           "datasource": {
@@ -465,16 +489,17 @@
           "values": false
         },
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "9.3.6",
+      "pluginVersion": "10.3.0-64399",
       "targets": [
         {
           "datasource": {
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 49,
+          "panelId": 36,
           "refId": "A"
         }
       ],
@@ -578,16 +603,17 @@
           "values": false
         },
         "text": {},
-        "textMode": "value"
+        "textMode": "value",
+        "wideLayout": true
       },
-      "pluginVersion": "9.3.6",
+      "pluginVersion": "10.3.0-64399",
       "targets": [
         {
           "datasource": {
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 49,
+          "panelId": 36,
           "refId": "A"
         }
       ],
@@ -722,9 +748,10 @@
           "values": false
         },
         "text": {},
-        "textMode": "auto"
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "9.3.6",
+      "pluginVersion": "10.3.0-64399",
       "targets": [
         {
           "datasource": {
@@ -753,6 +780,7 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
@@ -766,6 +794,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "stepAfter",
             "lineWidth": 1,
             "pointSize": 5,
@@ -886,7 +915,7 @@
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 49,
+          "panelId": 36,
           "refId": "A"
         }
       ],
@@ -1068,14 +1097,14 @@
           "zoom": 1
         }
       },
-      "pluginVersion": "9.3.6",
+      "pluginVersion": "10.3.0-64399",
       "targets": [
         {
           "datasource": {
             "type": "datasource",
             "uid": "-- Dashboard --"
           },
-          "panelId": 49,
+          "panelId": 36,
           "refId": "A"
         }
       ],
@@ -1151,8 +1180,8 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "fieldConfig": {
         "defaults": {
@@ -1161,7 +1190,9 @@
           },
           "custom": {
             "align": "auto",
-            "displayMode": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
             "filterable": true,
             "inspect": false,
             "minWidth": 50
@@ -1239,7 +1270,9 @@
       },
       "id": 49,
       "options": {
+        "cellHeight": "sm",
         "footer": {
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -1255,33 +1288,15 @@
           }
         ]
       },
-      "pluginVersion": "9.3.6",
+      "pluginVersion": "10.3.0-64399",
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "exemplar": true,
-          "expr": "(endlessh_client_open_count{instance=~\"$host\",job=~\"$job\"} - endlessh_client_open_count{instance=~\"$host\",job=~\"$job\"} offset $__interval) > 0 or (endlessh_client_open_count{instance=~\"$host\",job=~\"$job\"}!=0 unless endlessh_client_open_count{instance=~\"$host\",job=~\"$job\"} offset $__interval)",
-          "format": "table",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "Seen {{ip}}",
-          "refId": "Seen"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "exemplar": true,
-          "expr": "(endlessh_client_trapped_time_seconds{instance=~\"$host\",job=~\"$job\"} - endlessh_client_trapped_time_seconds{instance=~\"$host\",job=~\"$job\"} offset $__interval) > 0 or (endlessh_client_trapped_time_seconds{instance=~\"$host\",job=~\"$job\"}!=0 unless endlessh_client_trapped_time_seconds{instance=~\"$host\",job=~\"$job\"} offset $__interval)",
-          "format": "table",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "Trapped {{ip}}",
-          "refId": "Trapped"
+          "panelId": 36,
+          "refId": "A"
         }
       ],
       "title": "Clients",
@@ -1446,8 +1461,7 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 37,
-  "style": "dark",
+  "schemaVersion": 39,
   "tags": [
     "prometheus"
   ],
@@ -1511,6 +1525,6 @@
   "timezone": "",
   "title": "Endlessh",
   "uid": "ATIxYkO7k",
-  "version": 10,
+  "version": 6,
   "weekStart": ""
 }
