@@ -116,7 +116,7 @@ func main() {
 	maxClients := flag.Int64("max_clients", 4096, "Maximum number of clients")
 	connType := flag.String("conn_type", "tcp", "Connection type. Possible values are tcp, tcp4, tcp6")
 	connHost := flag.String("host", "0.0.0.0", "SSH listening address")
-	flag.Var(&connPorts, "port", "SSH listening port")
+	flag.Var(&connPorts, "port", fmt.Sprintf("SSH listening port. You may provide multiple -port flags to listen to multiple ports. (default %q)", defaultPort))
 	prometheusEnabled := flag.Bool("enable_prometheus", false, "Enable prometheus")
 	prometheusHost := flag.String("prometheus_host", "0.0.0.0", "The address for prometheus")
 	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
