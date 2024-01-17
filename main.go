@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2023 Shizun Ge
+// Copyright (C) 2021-2024 Shizun Ge
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,144 +17,21 @@
 package main
 
 import (
+	"endlessh-go/client"
+	"endlessh-go/geoip"
+	"endlessh-go/metrics"
 	"flag"
 	"fmt"
 	"net"
-	"net/http"
 	"os"
-	"sync/atomic"
+	"strings"
 	"time"
 
 	"github.com/golang/glog"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-var (
-	numTotalClients       int64
-	numTotalClientsClosed int64
-	numTotalBytes         int64
-	numTotalMilliseconds  int64
-	totalClients          prometheus.CounterFunc
-	totalClientsClosed    prometheus.CounterFunc
-	totalBytes            prometheus.CounterFunc
-	totalSeconds          prometheus.CounterFunc
-	clientIP              *prometheus.CounterVec
-	clientSeconds         *prometheus.CounterVec
-)
-
-func initPrometheus(prometheusHost, prometheusPort, prometheusEntry string) {
-	totalClients = prometheus.NewCounterFunc(
-		prometheus.CounterOpts{
-			Name: "endlessh_client_open_count_total",
-			Help: "Total number of clients that tried to connect to this host.",
-		}, func() float64 {
-			return float64(numTotalClients)
-		},
-	)
-	totalClientsClosed = prometheus.NewCounterFunc(
-		prometheus.CounterOpts{
-			Name: "endlessh_client_closed_count_total",
-			Help: "Total number of clients that stopped connecting to this host.",
-		}, func() float64 {
-			return float64(numTotalClientsClosed)
-		},
-	)
-	totalBytes = prometheus.NewCounterFunc(
-		prometheus.CounterOpts{
-			Name: "endlessh_sent_bytes_total",
-			Help: "Total bytes sent to clients that tried to connect to this host.",
-		}, func() float64 {
-			return float64(numTotalBytes)
-		},
-	)
-	totalSeconds = prometheus.NewCounterFunc(
-		prometheus.CounterOpts{
-			Name: "endlessh_trapped_time_seconds_total",
-			Help: "Total seconds clients spent on endlessh.",
-		}, func() float64 {
-			return float64(numTotalMilliseconds) / 1000
-		},
-	)
-	clientIP = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "endlessh_client_open_count",
-			Help: "Number of connections of clients.",
-		},
-		[]string{"ip", "geohash", "country", "location"},
-	)
-	clientSeconds = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "endlessh_client_trapped_time_seconds",
-			Help: "Seconds a client spends on endlessh.",
-		},
-		[]string{"ip"},
-	)
-	promReg := prometheus.NewRegistry()
-	promReg.MustRegister(totalClients)
-	promReg.MustRegister(totalClientsClosed)
-	promReg.MustRegister(totalBytes)
-	promReg.MustRegister(totalSeconds)
-	promReg.MustRegister(clientIP)
-	promReg.MustRegister(clientSeconds)
-	handler := promhttp.HandlerFor(promReg, promhttp.HandlerOpts{EnableOpenMetrics: true})
-	http.Handle("/"+prometheusEntry, handler)
-	go func() {
-		glog.Infof("Starting Prometheus on %v:%v, entry point is /%v", prometheusHost, prometheusPort, prometheusEntry)
-		http.ListenAndServe(prometheusHost+":"+prometheusPort, nil)
-	}()
-}
-
-const (
-	recordTypeStart = iota
-	recordTypeSend  = iota
-	recordTypeStop  = iota
-)
-
-type recordEntry struct {
-	RecordType        int
-	IpAddr            string
-	BytesSent         int
-	MillisecondsSpent int64
-}
-
-func startRecording(maxClients int64, prometheusEnabled bool, geoOption GeoOption) chan recordEntry {
-	records := make(chan recordEntry, maxClients)
-	go func() {
-		for {
-			r, more := <-records
-			if !more {
-				return
-			}
-			if !prometheusEnabled {
-				continue
-			}
-			switch r.RecordType {
-			case recordTypeStart:
-				geohash, country, location, err := geohashAndLocation(r.IpAddr, geoOption)
-				if err != nil {
-					glog.Warningf("Failed to obatin the geohash of %v: %v.", r.IpAddr, err)
-				}
-				clientIP.With(prometheus.Labels{
-					"ip":       r.IpAddr,
-					"geohash":  geohash,
-					"country":  country,
-					"location": location}).Inc()
-				atomic.AddInt64(&numTotalClients, 1)
-			case recordTypeSend:
-				clientSeconds.With(prometheus.Labels{"ip": r.IpAddr}).Add(float64(r.MillisecondsSpent) / 1000)
-				atomic.AddInt64(&numTotalBytes, int64(r.BytesSent))
-				atomic.AddInt64(&numTotalMilliseconds, r.MillisecondsSpent)
-			case recordTypeStop:
-				atomic.AddInt64(&numTotalClientsClosed, 1)
-			}
-		}
-	}()
-	return records
-}
-
-func startSending(maxClients int64, bannerMaxLength int64, records chan<- recordEntry) chan *Client {
-	clients := make(chan *Client, maxClients)
+func startSending(maxClients int64, bannerMaxLength int64, records chan<- metrics.RecordEntry) chan *client.Client {
+	clients := make(chan *client.Client, maxClients)
 	go func() {
 		for {
 			c, more := <-clients
@@ -163,20 +40,23 @@ func startSending(maxClients int64, bannerMaxLength int64, records chan<- record
 			}
 			go func() {
 				bytesSent, err := c.Send(bannerMaxLength)
-				ipAddr := c.IpAddr()
+				remoteIpAddr := c.RemoteIpAddr()
+				localPort := c.LocalPort()
 				if err != nil {
 					c.Close()
-					records <- recordEntry{
-						RecordType: recordTypeStop,
-						IpAddr:     ipAddr,
+					records <- metrics.RecordEntry{
+						RecordType: metrics.RecordEntryTypeStop,
+						IpAddr:     remoteIpAddr,
+						LocalPort:  localPort,
 					}
 					return
 				}
 				millisecondsSpent := c.MillisecondsSinceLast()
 				clients <- c
-				records <- recordEntry{
-					RecordType:        recordTypeSend,
-					IpAddr:            ipAddr,
+				records <- metrics.RecordEntry{
+					RecordType:        metrics.RecordEntryTypeSend,
+					IpAddr:            remoteIpAddr,
+					LocalPort:         localPort,
 					BytesSent:         bytesSent,
 					MillisecondsSpent: millisecondsSpent,
 				}
@@ -186,31 +66,49 @@ func startSending(maxClients int64, bannerMaxLength int64, records chan<- record
 	return clients
 }
 
-func startAccepting(maxClients int64, connType, connHost, connPort string, interval time.Duration, clients chan<- *Client, records chan<- recordEntry) {
-	l, err := net.Listen(connType, connHost+":"+connPort)
-	if err != nil {
-		glog.Errorf("Error listening: %v", err)
-		os.Exit(1)
-	}
-	// Close the listener when the application closes.
-	defer l.Close()
-	glog.Infof("Listening on %v:%v", connHost, connPort)
-	for {
-		// Listen for an incoming connection.
-		conn, err := l.Accept()
+func startAccepting(maxClients int64, connType, connHost, connPort string, interval time.Duration, clients chan<- *client.Client, records chan<- metrics.RecordEntry) {
+	go func() {
+		l, err := net.Listen(connType, connHost+":"+connPort)
 		if err != nil {
-			glog.Errorf("Error accepting connection from port %v: %v", connPort, err)
+			glog.Errorf("Error listening: %v", err)
 			os.Exit(1)
 		}
-		c := NewClient(conn, interval, maxClients)
-		ipAddr := c.IpAddr()
-		records <- recordEntry{
-			RecordType: recordTypeStart,
-			IpAddr:     ipAddr,
+		// Close the listener when the application closes.
+		defer l.Close()
+		glog.Infof("Listening on %v:%v", connHost, connPort)
+		for {
+			// Listen for an incoming connection.
+			conn, err := l.Accept()
+			if err != nil {
+				glog.Errorf("Error accepting connection from port %v: %v", connPort, err)
+				os.Exit(1)
+			}
+			c := client.NewClient(conn, interval, maxClients)
+			remoteIpAddr := c.RemoteIpAddr()
+			records <- metrics.RecordEntry{
+				RecordType: metrics.RecordEntryTypeStart,
+				IpAddr:     remoteIpAddr,
+				LocalPort:  connPort,
+			}
+			clients <- c
 		}
-		clients <- c
-	}
+	}()
 }
+
+type arrayStrings []string
+
+func (a *arrayStrings) String() string {
+	return strings.Join(*a, ", ")
+}
+
+func (a *arrayStrings) Set(value string) error {
+	*a = append(*a, value)
+	return nil
+}
+
+const defaultPort = "2222"
+
+var connPorts arrayStrings
 
 func main() {
 	intervalMs := flag.Int("interval_ms", 1000, "Message millisecond delay")
@@ -218,7 +116,7 @@ func main() {
 	maxClients := flag.Int64("max_clients", 4096, "Maximum number of clients")
 	connType := flag.String("conn_type", "tcp", "Connection type. Possible values are tcp, tcp4, tcp6")
 	connHost := flag.String("host", "0.0.0.0", "SSH listening address")
-	connPort := flag.String("port", "2222", "SSH listening port")
+	flag.Var(&connPorts, "port", "SSH listening port")
 	prometheusEnabled := flag.Bool("enable_prometheus", false, "Enable prometheus")
 	prometheusHost := flag.String("prometheus_host", "0.0.0.0", "The address for prometheus")
 	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
@@ -236,10 +134,10 @@ func main() {
 		if *connType == "tcp6" && *prometheusHost == "0.0.0.0" {
 			*prometheusHost = "[::]"
 		}
-		initPrometheus(*prometheusHost, *prometheusPort, *prometheusEntry)
+		metrics.InitPrometheus(*prometheusHost, *prometheusPort, *prometheusEntry)
 	}
 
-	records := startRecording(*maxClients, *prometheusEnabled, GeoOption{
+	records := metrics.StartRecording(*maxClients, *prometheusEnabled, geoip.GeoOption{
 		GeoipSupplier:     *geoipSupplier,
 		MaxMindDbFileName: *maxMindDbFileName,
 	})
@@ -250,7 +148,12 @@ func main() {
 	if *connType == "tcp6" && *connHost == "0.0.0.0" {
 		*connHost = "[::]"
 	}
-	go startAccepting(*maxClients, *connType, *connHost, *connPort, interval, clients, records)
+	if len(connPorts) == 0 {
+		connPorts = append(connPorts, defaultPort)
+	}
+	for _, connPort := range connPorts {
+		startAccepting(*maxClients, *connType, *connHost, connPort, interval, clients, records)
+	}
 	for {
 		time.Sleep(time.Duration(1<<63 - 1))
 	}

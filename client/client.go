@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Shizun Ge
+// Copyright (C) 2021-2024 Shizun Ge
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,11 +14,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-package main
+package client
 
 import (
 	"math/rand"
 	"net"
+	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -65,8 +66,12 @@ func NewClient(conn net.Conn, interval time.Duration, maxClients int64) *Client 
 	}
 }
 
-func (c *Client) IpAddr() string {
+func (c *Client) RemoteIpAddr() string {
 	return c.conn.RemoteAddr().(*net.TCPAddr).IP.String()
+}
+
+func (c *Client) LocalPort() string {
+	return strconv.Itoa(c.conn.LocalAddr().(*net.TCPAddr).Port)
 }
 
 func (c *Client) Send(bannerMaxLength int64) (int, error) {

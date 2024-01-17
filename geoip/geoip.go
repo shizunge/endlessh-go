@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2023 Shizun Ge
+// Copyright (C) 2021-2024 Shizun Ge
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-package main
+package geoip
 
 import (
 	"encoding/json"
@@ -24,8 +24,6 @@ import (
 	"net/http"
 	"strings"
 
-	"endlessh-go/coordinates"
-
 	"github.com/oschwald/geoip2-golang"
 	"github.com/pierrre/geohash"
 )
@@ -34,8 +32,6 @@ type GeoOption struct {
 	GeoipSupplier     string
 	MaxMindDbFileName string
 }
-
-var ()
 
 func composeLocation(country string, region string, city string) string {
 	var locations []string
@@ -120,7 +116,7 @@ func geohashAndLocationFromMaxMindDb(ipAddr, maxMindDbFileName string) (string, 
 	iso := cityRecord.Country.IsoCode
 	if latitude == 0 && longitude == 0 {
 		// In case of using Country DB, city is not available.
-		loc, ok := coordinates.Country[iso]
+		loc, ok := countryToLocation[iso]
 		if ok {
 			latitude = loc.Latitude
 			longitude = loc.Longitude
@@ -138,7 +134,7 @@ func geohashAndLocationFromMaxMindDb(ipAddr, maxMindDbFileName string) (string, 
 	return gh, country, location, nil
 }
 
-func geohashAndLocation(ipAddr string, option GeoOption) (string, string, string, error) {
+func GeohashAndLocation(ipAddr string, option GeoOption) (string, string, string, error) {
 	switch option.GeoipSupplier {
 	case "off":
 		return "s000", "Geohash off", "Geohash off", nil
