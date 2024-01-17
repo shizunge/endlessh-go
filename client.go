@@ -23,10 +23,12 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
-var letterBytes = []byte(" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890!@#$%^&*()-=_+[]{}|;:',./<>?")
+var (
+	numCurrentClients int64
+	letterBytes       = []byte(" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890!@#$%^&*()-=_+[]{}|;:',./<>?")
+)
 
 func randStringBytes(n int64) []byte {
 	b := make([]byte, n+1)
@@ -37,75 +39,59 @@ func randStringBytes(n int64) []byte {
 	return b
 }
 
-type client struct {
-	conn              net.Conn
-	last              time.Time
-	next              time.Time
-	start             time.Time
-	interval          time.Duration
-	geoipSupplier     string
-	geohash           string
-	country           string
-	location          string
-	bytesSent         int
-	prometheusEnabled bool
+type Client struct {
+	conn      net.Conn
+	next      time.Time
+	start     time.Time
+	last      time.Time
+	interval  time.Duration
+	bytesSent int
 }
 
-func NewClient(conn net.Conn, interval time.Duration, maxClient int64, geoipSupplier string, prometheusEnabled bool) *client {
-	addr := conn.RemoteAddr().(*net.TCPAddr)
+func NewClient(conn net.Conn, interval time.Duration, maxClients int64) *Client {
+	for numCurrentClients >= maxClients {
+		time.Sleep(interval)
+	}
 	atomic.AddInt64(&numCurrentClients, 1)
-	atomic.AddInt64(&numTotalClients, 1)
-	geohash, country, location, err := geohashAndLocation(addr.IP.String(), geoipSupplier)
-	if err != nil {
-		glog.Warningf("Failed to obatin the geohash of %v: %v.", addr.IP, err)
-	}
-	if prometheusEnabled {
-		clientIP.With(prometheus.Labels{
-			"ip":       addr.IP.String(),
-			"geohash":  geohash,
-			"country":  country,
-			"location": location}).Inc()
-	}
-	glog.V(1).Infof("ACCEPT host=%v port=%v n=%v/%v\n", addr.IP, addr.Port, numCurrentClients, maxClient)
-	return &client{
-		conn:              conn,
-		last:              time.Now(),
-		next:              time.Now().Add(interval),
-		start:             time.Now(),
-		interval:          interval,
-		geohash:           geohash,
-		country:           country,
-		location:          location,
-		bytesSent:         0,
-		prometheusEnabled: prometheusEnabled,
+	addr := conn.RemoteAddr().(*net.TCPAddr)
+	glog.V(1).Infof("ACCEPT host=%v port=%v n=%v/%v\n", addr.IP, addr.Port, numCurrentClients, maxClients)
+	return &Client{
+		conn:      conn,
+		next:      time.Now().Add(interval),
+		start:     time.Now(),
+		last:      time.Now(),
+		interval:  interval,
+		bytesSent: 0,
 	}
 }
 
-func (c *client) Send(bannerMaxLength int64) error {
-	defer func(c *client) {
-		addr := c.conn.RemoteAddr().(*net.TCPAddr)
-		millisecondsSpent := time.Now().Sub(c.last).Milliseconds()
-		c.last = time.Now()
-		c.next = time.Now().Add(c.interval)
-		atomic.AddInt64(&numTotalMilliseconds, millisecondsSpent)
-		if c.prometheusEnabled {
-			clientSeconds.With(prometheus.Labels{"ip": addr.IP.String()}).Add(float64(millisecondsSpent) / 1000)
-		}
-	}(c)
+func (c *Client) IpAddr() string {
+	return c.conn.RemoteAddr().(*net.TCPAddr).IP.String()
+}
+
+func (c *Client) Send(bannerMaxLength int64) (int, error) {
+	if time.Now().Before(c.next) {
+		time.Sleep(c.next.Sub(time.Now()))
+	}
+	c.next = time.Now().Add(c.interval)
 	length := rand.Int63n(bannerMaxLength)
 	bytesSent, err := c.conn.Write(randStringBytes(length))
 	if err != nil {
-		return err
+		return 0, err
 	}
 	c.bytesSent += bytesSent
-	atomic.AddInt64(&numTotalBytes, int64(bytesSent))
-	return nil
+	return bytesSent, nil
 }
 
-func (c *client) Close() {
+func (c *Client) MillisecondsSinceLast() int64 {
+	millisecondsSpent := time.Now().Sub(c.last).Milliseconds()
+	c.last = time.Now()
+	return millisecondsSpent
+}
+
+func (c *Client) Close() {
 	addr := c.conn.RemoteAddr().(*net.TCPAddr)
-	atomic.AddInt64(&numCurrentClients, -1)
-	atomic.AddInt64(&numTotalClientsClosed, 1)
 	glog.V(1).Infof("CLOSE host=%v port=%v time=%v bytes=%v\n", addr.IP, addr.Port, time.Now().Sub(c.start).Seconds(), c.bytesSent)
 	c.conn.Close()
+	atomic.AddInt64(&numCurrentClients, -1)
 }

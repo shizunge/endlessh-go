@@ -19,10 +19,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"math/rand"
 	"net"
 	"net/http"
 	"os"
+	"sync/atomic"
 	"time"
 
 	"github.com/golang/glog"
@@ -31,7 +31,6 @@ import (
 )
 
 var (
-	numCurrentClients     int64
 	numTotalClients       int64
 	numTotalClientsClosed int64
 	numTotalBytes         int64
@@ -106,6 +105,113 @@ func initPrometheus(prometheusHost, prometheusPort, prometheusEntry string) {
 	}()
 }
 
+const (
+	recordTypeStart = iota
+	recordTypeSend  = iota
+	recordTypeStop  = iota
+)
+
+type recordEntry struct {
+	RecordType        int
+	IpAddr            string
+	BytesSent         int
+	MillisecondsSpent int64
+}
+
+func startRecording(maxClients int64, prometheusEnabled bool, geoOption GeoOption) chan recordEntry {
+	records := make(chan recordEntry, maxClients)
+	go func() {
+		for {
+			r, more := <-records
+			if !more {
+				return
+			}
+			if !prometheusEnabled {
+				continue
+			}
+			switch r.RecordType {
+			case recordTypeStart:
+				geohash, country, location, err := geohashAndLocation(r.IpAddr, geoOption)
+				if err != nil {
+					glog.Warningf("Failed to obatin the geohash of %v: %v.", r.IpAddr, err)
+				}
+				clientIP.With(prometheus.Labels{
+					"ip":       r.IpAddr,
+					"geohash":  geohash,
+					"country":  country,
+					"location": location}).Inc()
+				atomic.AddInt64(&numTotalClients, 1)
+			case recordTypeSend:
+				clientSeconds.With(prometheus.Labels{"ip": r.IpAddr}).Add(float64(r.MillisecondsSpent) / 1000)
+				atomic.AddInt64(&numTotalBytes, int64(r.BytesSent))
+				atomic.AddInt64(&numTotalMilliseconds, r.MillisecondsSpent)
+			case recordTypeStop:
+				atomic.AddInt64(&numTotalClientsClosed, 1)
+			}
+		}
+	}()
+	return records
+}
+
+func startSending(maxClients int64, bannerMaxLength int64, records chan<- recordEntry) chan *Client {
+	clients := make(chan *Client, maxClients)
+	go func() {
+		for {
+			c, more := <-clients
+			if !more {
+				return
+			}
+			go func() {
+				bytesSent, err := c.Send(bannerMaxLength)
+				ipAddr := c.IpAddr()
+				if err != nil {
+					c.Close()
+					records <- recordEntry{
+						RecordType: recordTypeStop,
+						IpAddr:     ipAddr,
+					}
+					return
+				}
+				millisecondsSpent := c.MillisecondsSinceLast()
+				clients <- c
+				records <- recordEntry{
+					RecordType:        recordTypeSend,
+					IpAddr:            ipAddr,
+					BytesSent:         bytesSent,
+					MillisecondsSpent: millisecondsSpent,
+				}
+			}()
+		}
+	}()
+	return clients
+}
+
+func startAccepting(maxClients int64, connType, connHost, connPort string, interval time.Duration, clients chan<- *Client, records chan<- recordEntry) {
+	l, err := net.Listen(connType, connHost+":"+connPort)
+	if err != nil {
+		glog.Errorf("Error listening: %v", err)
+		os.Exit(1)
+	}
+	// Close the listener when the application closes.
+	defer l.Close()
+	glog.Infof("Listening on %v:%v", connHost, connPort)
+	for {
+		// Listen for an incoming connection.
+		conn, err := l.Accept()
+		if err != nil {
+			glog.Errorf("Error accepting connection from port %v: %v", connPort, err)
+			os.Exit(1)
+		}
+		c := NewClient(conn, interval, maxClients)
+		ipAddr := c.IpAddr()
+		records <- recordEntry{
+			RecordType: recordTypeStart,
+			IpAddr:     ipAddr,
+		}
+		clients <- c
+	}
+}
+
 func main() {
 	intervalMs := flag.Int("interval_ms", 1000, "Message millisecond delay")
 	bannerMaxLength := flag.Int64("line_length", 32, "Maximum banner line length")
@@ -118,7 +224,7 @@ func main() {
 	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
 	prometheusEntry := flag.String("prometheus_entry", "metrics", "Entry point for prometheus")
 	geoipSupplier := flag.String("geoip_supplier", "off", "Supplier to obtain Geohash of IPs. Possible values are \"off\", \"ip-api\", \"max-mind-db\"")
-	maxMindDbFileName = flag.String("max_mind_db", "", "Path to the MaxMind DB file.")
+	maxMindDbFileName := flag.String("max_mind_db", "", "Path to the MaxMind DB file.")
 
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %v \n", os.Args[0])
@@ -126,60 +232,26 @@ func main() {
 	}
 	flag.Parse()
 
-	if *connType == "tcp6" && *prometheusHost == "0.0.0.0" {
-		*prometheusHost = "[::]"
-	}
 	if *prometheusEnabled {
+		if *connType == "tcp6" && *prometheusHost == "0.0.0.0" {
+			*prometheusHost = "[::]"
+		}
 		initPrometheus(*prometheusHost, *prometheusPort, *prometheusEntry)
 	}
 
-	rand.Seed(time.Now().UnixNano())
+	records := startRecording(*maxClients, *prometheusEnabled, GeoOption{
+		GeoipSupplier:     *geoipSupplier,
+		MaxMindDbFileName: *maxMindDbFileName,
+	})
+	clients := startSending(*maxClients, *bannerMaxLength, records)
+
 	interval := time.Duration(*intervalMs) * time.Millisecond
 	// Listen for incoming connections.
 	if *connType == "tcp6" && *connHost == "0.0.0.0" {
 		*connHost = "[::]"
 	}
-	l, err := net.Listen(*connType, *connHost+":"+*connPort)
-	if err != nil {
-		glog.Errorf("Error listening: %v", err)
-		os.Exit(1)
+	go startAccepting(*maxClients, *connType, *connHost, *connPort, interval, clients, records)
+	for {
+		time.Sleep(time.Duration(1<<63 - 1))
 	}
-	// Close the listener when the application closes.
-	defer l.Close()
-	glog.Infof("Listening on %v:%v", *connHost, *connPort)
-
-	clients := make(chan *client, *maxClients)
-	go func() {
-		for {
-			c, more := <-clients
-			if !more {
-				return
-			}
-			if time.Now().Before(c.next) {
-				time.Sleep(c.next.Sub(time.Now()))
-			}
-			err := c.Send(*bannerMaxLength)
-			if err != nil {
-				c.Close()
-				continue
-			}
-			go func() { clients <- c }()
-		}
-	}()
-	listener := func() {
-		for {
-			// Listen for an incoming connection.
-			conn, err := l.Accept()
-			if err != nil {
-				glog.Errorf("Error accepting: %v", err)
-				os.Exit(1)
-			}
-			// Handle connections in a new goroutine.
-			for numCurrentClients >= *maxClients {
-				time.Sleep(interval)
-			}
-			clients <- NewClient(conn, interval, *maxClients, *geoipSupplier, *prometheusEnabled)
-		}
-	}
-	listener()
 }
