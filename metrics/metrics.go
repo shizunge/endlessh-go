@@ -19,7 +19,6 @@ package metrics
 import (
 	"endlessh-go/geoip"
 	"net/http"
-	"sync/atomic"
 
 	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
@@ -27,50 +26,38 @@ import (
 )
 
 var (
-	numTotalClients       int64
-	numTotalClientsClosed int64
-	numTotalBytes         int64
-	numTotalMilliseconds  int64
-	totalClients          prometheus.CounterFunc
-	totalClientsClosed    prometheus.CounterFunc
-	totalBytes            prometheus.CounterFunc
-	totalSeconds          prometheus.CounterFunc
-	clientIP              *prometheus.CounterVec
-	clientSeconds         *prometheus.CounterVec
+	totalClients       *prometheus.CounterVec
+	totalClientsClosed *prometheus.CounterVec
+	totalBytes         *prometheus.CounterVec
+	totalSeconds       *prometheus.CounterVec
+	clientIP           *prometheus.CounterVec
+	clientSeconds      *prometheus.CounterVec
 )
 
 func InitPrometheus(prometheusHost, prometheusPort, prometheusEntry string) {
-	totalClients = prometheus.NewCounterFunc(
+	totalClients = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "endlessh_client_open_count_total",
 			Help: "Total number of clients that tried to connect to this host.",
-		}, func() float64 {
-			return float64(numTotalClients)
-		},
+		}, []string{"local_port"},
 	)
-	totalClientsClosed = prometheus.NewCounterFunc(
+	totalClientsClosed = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "endlessh_client_closed_count_total",
 			Help: "Total number of clients that stopped connecting to this host.",
-		}, func() float64 {
-			return float64(numTotalClientsClosed)
-		},
+		}, []string{"local_port"},
 	)
-	totalBytes = prometheus.NewCounterFunc(
+	totalBytes = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "endlessh_sent_bytes_total",
 			Help: "Total bytes sent to clients that tried to connect to this host.",
-		}, func() float64 {
-			return float64(numTotalBytes)
-		},
+		}, []string{"local_port"},
 	)
-	totalSeconds = prometheus.NewCounterFunc(
+	totalSeconds = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "endlessh_trapped_time_seconds_total",
 			Help: "Total seconds clients spent on endlessh.",
-		}, func() float64 {
-			return float64(numTotalMilliseconds) / 1000
-		},
+		}, []string{"local_port"},
 	)
 	clientIP = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -138,15 +125,16 @@ func StartRecording(maxClients int64, prometheusEnabled bool, geoOption geoip.Ge
 					"geohash":    geohash,
 					"country":    country,
 					"location":   location}).Inc()
-				atomic.AddInt64(&numTotalClients, 1)
+				totalClients.With(prometheus.Labels{"local_port": r.LocalPort}).Inc()
 			case RecordEntryTypeSend:
+				secondsSpent := float64(r.MillisecondsSpent) / 1000
 				clientSeconds.With(prometheus.Labels{
 					"ip":         r.IpAddr,
-					"local_port": r.LocalPort}).Add(float64(r.MillisecondsSpent) / 1000)
-				atomic.AddInt64(&numTotalBytes, int64(r.BytesSent))
-				atomic.AddInt64(&numTotalMilliseconds, r.MillisecondsSpent)
+					"local_port": r.LocalPort}).Add(secondsSpent)
+				totalBytes.With(prometheus.Labels{"local_port": r.LocalPort}).Add(float64(r.BytesSent))
+				totalSeconds.With(prometheus.Labels{"local_port": r.LocalPort}).Add(secondsSpent)
 			case RecordEntryTypeStop:
-				atomic.AddInt64(&numTotalClientsClosed, 1)
+				totalClientsClosed.With(prometheus.Labels{"local_port": r.LocalPort}).Inc()
 			}
 		}
 	}()
