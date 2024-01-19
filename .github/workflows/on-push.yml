@@ -1,9 +1,10 @@
-name: On push to main
+name: On push
 
 on:
   push:
-    branches:
-      - main
+    branches-ignore:
+      - release
+    workflow_dispatch:
 
 env:
   PLATFORMS: "linux/amd64,linux/arm64,linux/arm/v7"
