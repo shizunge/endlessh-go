@@ -73,6 +73,8 @@ Usage of ./endlessh-go
         Path to the MaxMind DB file.
   -port value
         SSH listening port. You may provide multiple -port flags to listen to multiple ports. (default "2222")
+  -prometheus_clean_unseen_seconds int
+        Remove series if the IP is not seen for the given time. Set to 0 to disable. (default 0)
   -prometheus_entry string
         Entry point for prometheus (default "metrics")
   -prometheus_host string

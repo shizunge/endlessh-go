@@ -121,6 +121,7 @@ func main() {
 	prometheusHost := flag.String("prometheus_host", "0.0.0.0", "The address for prometheus")
 	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
 	prometheusEntry := flag.String("prometheus_entry", "metrics", "Entry point for prometheus")
+	prometheusCleanUnseenSeconds := flag.Int("prometheus_clean_unseen_seconds", 0, "Remove series if the IP is not seen for the given time. Set to 0 to disable. (default 0)")
 	geoipSupplier := flag.String("geoip_supplier", "off", "Supplier to obtain Geohash of IPs. Possible values are \"off\", \"ip-api\", \"max-mind-db\"")
 	maxMindDbFileName := flag.String("max_mind_db", "", "Path to the MaxMind DB file.")
 
@@ -137,10 +138,11 @@ func main() {
 		metrics.InitPrometheus(*prometheusHost, *prometheusPort, *prometheusEntry)
 	}
 
-	records := metrics.StartRecording(*maxClients, *prometheusEnabled, geoip.GeoOption{
-		GeoipSupplier:     *geoipSupplier,
-		MaxMindDbFileName: *maxMindDbFileName,
-	})
+	records := metrics.StartRecording(*maxClients, *prometheusEnabled, *prometheusCleanUnseenSeconds,
+		geoip.GeoOption{
+			GeoipSupplier:     *geoipSupplier,
+			MaxMindDbFileName: *maxMindDbFileName,
+		})
 	clients := startSending(*maxClients, *bannerMaxLength, records)
 
 	interval := time.Duration(*intervalMs) * time.Millisecond
@@ -155,6 +157,13 @@ func main() {
 		startAccepting(*maxClients, *connType, *connHost, connPort, interval, clients, records)
 	}
 	for {
-		time.Sleep(time.Duration(1<<63 - 1))
+		if *prometheusCleanUnseenSeconds <= 0 {
+			time.Sleep(time.Duration(1<<63 - 1))
+		} else {
+			time.Sleep(time.Second * time.Duration(60))
+			records <- metrics.RecordEntry{
+				RecordType: metrics.RecordEntryTypeClean,
+			}
+		}
 	}
 }

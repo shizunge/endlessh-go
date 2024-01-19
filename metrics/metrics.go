@@ -19,6 +19,8 @@ package metrics
 import (
 	"endlessh-go/geoip"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
@@ -26,6 +28,7 @@ import (
 )
 
 var (
+	pq                 *UpdatablePriorityQueue
 	totalClients       *prometheus.CounterVec
 	totalClientsClosed *prometheus.CounterVec
 	totalBytes         *prometheus.CounterVec
@@ -35,6 +38,7 @@ var (
 )
 
 func InitPrometheus(prometheusHost, prometheusPort, prometheusEntry string) {
+	pq = NewUpdatablePriorityQueue()
 	totalClients = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "endlessh_client_open_count_total",
@@ -84,7 +88,10 @@ func InitPrometheus(prometheusHost, prometheusPort, prometheusEntry string) {
 	http.Handle("/"+prometheusEntry, handler)
 	go func() {
 		glog.Infof("Starting Prometheus on %v:%v, entry point is /%v", prometheusHost, prometheusPort, prometheusEntry)
-		http.ListenAndServe(prometheusHost+":"+prometheusPort, nil)
+		if err := http.ListenAndServe(prometheusHost+":"+prometheusPort, nil); err != nil {
+			glog.Errorf("Error starting Prometheus at port %v:%v: %v", prometheusHost, prometheusPort, err)
+			os.Exit(1)
+		}
 	}()
 }
 
@@ -92,6 +99,7 @@ const (
 	RecordEntryTypeStart = iota
 	RecordEntryTypeSend  = iota
 	RecordEntryTypeStop  = iota
+	RecordEntryTypeClean = iota
 )
 
 type RecordEntry struct {
@@ -102,7 +110,7 @@ type RecordEntry struct {
 	MillisecondsSpent int64
 }
 
-func StartRecording(maxClients int64, prometheusEnabled bool, geoOption geoip.GeoOption) chan RecordEntry {
+func StartRecording(maxClients int64, prometheusEnabled bool, prometheusCleanUnseenSeconds int, geoOption geoip.GeoOption) chan RecordEntry {
 	records := make(chan RecordEntry, maxClients)
 	go func() {
 		for {
@@ -126,6 +134,7 @@ func StartRecording(maxClients int64, prometheusEnabled bool, geoOption geoip.Ge
 					"country":    country,
 					"location":   location}).Inc()
 				totalClients.With(prometheus.Labels{"local_port": r.LocalPort}).Inc()
+				pq.Update(r.IpAddr, time.Now())
 			case RecordEntryTypeSend:
 				secondsSpent := float64(r.MillisecondsSpent) / 1000
 				clientSeconds.With(prometheus.Labels{
@@ -133,8 +142,19 @@ func StartRecording(maxClients int64, prometheusEnabled bool, geoOption geoip.Ge
 					"local_port": r.LocalPort}).Add(secondsSpent)
 				totalBytes.With(prometheus.Labels{"local_port": r.LocalPort}).Add(float64(r.BytesSent))
 				totalSeconds.With(prometheus.Labels{"local_port": r.LocalPort}).Add(secondsSpent)
+				pq.Update(r.IpAddr, time.Now())
 			case RecordEntryTypeStop:
 				totalClientsClosed.With(prometheus.Labels{"local_port": r.LocalPort}).Inc()
+				pq.Update(r.IpAddr, time.Now())
+			case RecordEntryTypeClean:
+				top := pq.Peek()
+				deadline := time.Now().Add(-time.Second * time.Duration(prometheusCleanUnseenSeconds))
+				for top != nil && top.Value.Before(deadline) {
+					clientIP.DeletePartialMatch(prometheus.Labels{"ip": top.Key})
+					clientSeconds.DeletePartialMatch(prometheus.Labels{"ip": top.Key})
+					pq.Pop()
+					top = pq.Peek()
+				}
 			}
 		}
 	}()
