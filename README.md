@@ -99,8 +99,8 @@ Endlessh-go exports the following Prometheus metrics.
 | endlessh_client_closed_count_total   | count | Total number of clients that stopped connecting to this host. |
 | endlessh_sent_bytes_total            | count | Total bytes sent to clients that tried to connect to this host. |
 | endlessh_trapped_time_seconds_total  | count | Total seconds clients spent on endlessh. |
-| endlessh_client_open_count           | count | Number of connections of clients. <br> Labels: <br> <ul><li> `ip`: IP of the client </li> <li>  `country`: Country of the IP </li> <li>  `location`: Country, Region, and City </li> <li>  `geohash`: Geohash of the location </li></ul> |
-| endlessh_client_trapped_time_seconds | count | Seconds a client spends on endlessh. <br> Labels: <br> <ul><li>  `ip`: IP of the client </li></ul> |
+| endlessh_client_open_count           | count | Number of connections of clients. <br> Labels: <br> <ul><li> `ip`: Remote IP of the client </li> <li> `local_port`: Local port the program listens to </li> <li> `country`: Country of the IP </li> <li> `location`: Country, Region, and City </li> <li> `geohash`: Geohash of the location </li></ul> |
+| endlessh_client_trapped_time_seconds | count | Seconds a client spends on endlessh. <br> Labels: <br> <ul><li> `ip`: Remote IP of the client </li> <li> `local_port`: Local port the program listens to </li></ul> |
 
 The metrics is off by default, you can turn it via the CLI argument `-enable_prometheus`.
 
