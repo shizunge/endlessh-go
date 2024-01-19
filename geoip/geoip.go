@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2023 Shizun Ge
+// Copyright (C) 2021-2024 Shizun Ge
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-package main
+package geoip
 
 import (
 	"encoding/json"
@@ -24,15 +24,14 @@ import (
 	"net/http"
 	"strings"
 
-	"endlessh-go/coordinates"
-
 	"github.com/oschwald/geoip2-golang"
 	"github.com/pierrre/geohash"
 )
 
-var (
-	maxMindDbFileName *string
-)
+type GeoOption struct {
+	GeoipSupplier     string
+	MaxMindDbFileName string
+}
 
 func composeLocation(country string, region string, city string) string {
 	var locations []string
@@ -69,9 +68,9 @@ type ipapi struct {
 	Longitude   float64 `json:"lon"`
 }
 
-func geohashAndLocationFromIpapi(address string) (string, string, string, error) {
+func geohashAndLocationFromIpapi(ipAddr string) (string, string, string, error) {
 	var geo ipapi
-	response, err := http.Get("http://ip-api.com/json/" + address)
+	response, err := http.Get("http://ip-api.com/json/" + ipAddr)
 	if err != nil {
 		return "s000", "Unknown", "Unknown", err
 	}
@@ -88,7 +87,7 @@ func geohashAndLocationFromIpapi(address string) (string, string, string, error)
 	}
 
 	if geo.Status != "success" {
-		return "s000", "Unknown", "Unknown", fmt.Errorf("failed to query %v via ip-api: status: %v, message: %v", address, geo.Status, geo.Message)
+		return "s000", "Unknown", "Unknown", fmt.Errorf("failed to query %v via ip-api: status: %v, message: %v", ipAddr, geo.Status, geo.Message)
 	}
 
 	gh := geohash.EncodeAuto(geo.Latitude, geo.Longitude)
@@ -98,14 +97,14 @@ func geohashAndLocationFromIpapi(address string) (string, string, string, error)
 	return gh, country, location, nil
 }
 
-func geohashAndLocationFromMaxMindDb(address string) (string, string, string, error) {
-	db, err := geoip2.Open(*maxMindDbFileName)
+func geohashAndLocationFromMaxMindDb(ipAddr, maxMindDbFileName string) (string, string, string, error) {
+	db, err := geoip2.Open(maxMindDbFileName)
 	if err != nil {
 		return "s000", "Unknown", "Unknown", err
 	}
 	defer db.Close()
 	// If you are using strings that may be invalid, check that ip is not nil
-	ip := net.ParseIP(address)
+	ip := net.ParseIP(ipAddr)
 	cityRecord, err := db.City(ip)
 	if err != nil {
 		return "s000", "Unknown", "Unknown", err
@@ -117,7 +116,7 @@ func geohashAndLocationFromMaxMindDb(address string) (string, string, string, er
 	iso := cityRecord.Country.IsoCode
 	if latitude == 0 && longitude == 0 {
 		// In case of using Country DB, city is not available.
-		loc, ok := coordinates.Country[iso]
+		loc, ok := countryToLocation[iso]
 		if ok {
 			latitude = loc.Latitude
 			longitude = loc.Longitude
@@ -135,15 +134,15 @@ func geohashAndLocationFromMaxMindDb(address string) (string, string, string, er
 	return gh, country, location, nil
 }
 
-func geohashAndLocation(address string, geoipSupplier string) (string, string, string, error) {
-	switch geoipSupplier {
+func GeohashAndLocation(ipAddr string, option GeoOption) (string, string, string, error) {
+	switch option.GeoipSupplier {
 	case "off":
 		return "s000", "Geohash off", "Geohash off", nil
 	case "ip-api":
-		return geohashAndLocationFromIpapi(address)
+		return geohashAndLocationFromIpapi(ipAddr)
 	case "max-mind-db":
-		return geohashAndLocationFromMaxMindDb(address)
+		return geohashAndLocationFromMaxMindDb(ipAddr, option.MaxMindDbFileName)
 	default:
-		return "s000", "Unknown", "Unknown", fmt.Errorf("unknown geoipSupplier %v.", geoipSupplier)
+		return "s000", "Unknown", "Unknown", fmt.Errorf("unknown geoipSupplier %v.", option.GeoipSupplier)
 	}
 }

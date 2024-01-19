@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Shizun Ge
+// Copyright (C) 2023-2024 Shizun Ge
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,16 +14,16 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-package coordinates
+package geoip
 
 // Map country's ISO to their capital's latitude and longitude.
 // Country's ISO see https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
-type Location struct {
+type location struct {
 	Latitude  float64
 	Longitude float64
 }
 
-var Country = map[string]Location{
+var countryToLocation = map[string]location{
 	"AD": {42.5, 1.5},
 	"AE": {24.4511, 54.3969},
 	"AF": {34.5328, 69.1658},

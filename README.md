@@ -61,14 +61,20 @@ Usage of ./endlessh-go
         when logging hits line file:N, emit a stack trace
   -log_dir string
         If non-empty, write log files in this directory
+  -log_link string
+        If non-empty, add symbolic links in this directory to the log files
+  -logbuflevel int
+        Buffer log messages logged at this level or lower (-1 means don't buffer; 0 means buffer INFO only; ...). Has limited applicability on non-prod platforms.
   -logtostderr
         log to standard error instead of files
   -max_clients int
         Maximum number of clients (default 4096)
   -max_mind_db string
         Path to the MaxMind DB file.
-  -port string
-        SSH listening port (default "2222")
+  -port value
+        SSH listening port. You may provide multiple -port flags to listen to multiple ports. (default "2222")
+  -prometheus_clean_unseen_seconds int
+        Remove series if the IP is not seen for the given time. Set to 0 to disable. (default 0)
   -prometheus_entry string
         Entry point for prometheus (default "metrics")
   -prometheus_host string
@@ -76,7 +82,7 @@ Usage of ./endlessh-go
   -prometheus_port string
         The port for prometheus (default "2112")
   -stderrthreshold value
-        logs at or above this threshold go to stderr
+        logs at or above this threshold go to stderr (default 2)
   -v value
         log level for V logs
   -vmodule value
@@ -93,8 +99,8 @@ Endlessh-go exports the following Prometheus metrics.
 | endlessh_client_closed_count_total   | count | Total number of clients that stopped connecting to this host. |
 | endlessh_sent_bytes_total            | count | Total bytes sent to clients that tried to connect to this host. |
 | endlessh_trapped_time_seconds_total  | count | Total seconds clients spent on endlessh. |
-| endlessh_client_open_count           | count | Number of connections of clients. <br> Labels: <br> <ul><li> `ip`: IP of the client </li> <li>  `country`: Country of the IP </li> <li>  `location`: Country, Region, and City </li> <li>  `geohash`: Geohash of the location </li></ul> |
-| endlessh_client_trapped_time_seconds | count | Seconds a client spends on endlessh. <br> Labels: <br> <ul><li>  `ip`: IP of the client </li></ul> |
+| endlessh_client_open_count           | count | Number of connections of clients. <br> Labels: <br> <ul><li> `ip`: Remote IP of the client </li> <li> `local_port`: Local port the program listens to </li> <li> `country`: Country of the IP </li> <li> `location`: Country, Region, and City </li> <li> `geohash`: Geohash of the location </li></ul> |
+| endlessh_client_trapped_time_seconds | count | Seconds a client spends on endlessh. <br> Labels: <br> <ul><li> `ip`: Remote IP of the client </li> <li> `local_port`: Local port the program listens to </li></ul> |
 
 The metrics is off by default, you can turn it via the CLI argument `-enable_prometheus`.
 
