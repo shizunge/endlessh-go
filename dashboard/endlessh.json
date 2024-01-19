@@ -76,7 +76,7 @@
       }
     ]
   },
-  "description": "Dashboard for endlessh (Load metrics at the first panel instead of the last panel)",
+  "description": "Dashboard for endlessh (Fix current connections)",
   "editable": false,
   "fiscalYearStartMonth": 0,
   "gnetId": 15156,
@@ -759,7 +759,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "sum((endlessh_client_open_count_total{instance=~\"$host\",job=~\"$job\"}) - (endlessh_client_closed_count_total{instance=~\"$host\",job=~\"$job\"} offset $__interval  or endlessh_client_open_count_total{instance=~\"$host\",job=~\"$job\"} * 0))",
+          "expr": "sum((endlessh_client_open_count_total{instance=~\"$host\",job=~\"$job\"}) - (endlessh_client_closed_count_total{instance=~\"$host\",job=~\"$job\"} or endlessh_client_open_count_total{instance=~\"$host\",job=~\"$job\"} * 0))",
           "instant": false,
           "interval": "",
           "legendFormat": "Open Connections",
@@ -1525,6 +1525,6 @@
   "timezone": "",
   "title": "Endlessh",
   "uid": "ATIxYkO7k",
-  "version": 6,
+  "version": 12,
   "weekStart": ""
 }
