@@ -72,15 +72,16 @@ jobs:
           skip-tags: latest, development
           filter-tags: "dev-*"
           dry-run: False
-      - name: Delete untagged images
-        uses: snok/container-retention-policy@v2
-        with:
-          image-names: endlessh-go
-          cut-off: One hour ago UTC
-          account-type: personal
-          token: ${{ secrets.TOKEN_DELETE_GHCR_IMAGES }}
-          keep-at-least: 0
-          untagged-only: True
-          skip-tags: latest, development
+      # # Untagged images could be the images for different OS/Arch. Do not delete them.
+      # - name: Delete untagged images
+      #   uses: snok/container-retention-policy@v2
+      #   with:
+      #     image-names: endlessh-go
+      #     cut-off: One hour ago UTC
+      #     account-type: personal
+      #     token: ${{ secrets.TOKEN_DELETE_GHCR_IMAGES }}
+      #     keep-at-least: 0
+      #     untagged-only: True
+      #     skip-tags: latest, development
           dry-run: False
 
