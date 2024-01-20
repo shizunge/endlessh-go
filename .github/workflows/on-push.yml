@@ -65,7 +65,7 @@ jobs:
         uses: snok/container-retention-policy@v2
         with:
           image-names: endlessh-go
-          cut-off: One day ago UTC
+          cut-off: One week ago UTC
           account-type: personal
           token: ${{ secrets.TOKEN_DELETE_GHCR_IMAGES }}
           keep-at-least: 5
