@@ -57,32 +57,4 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           provenance: false
 
-  clean-ghcr:
-    name: Delete old dev container images
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delete old dev images
-        uses: snok/container-retention-policy@v2
-        with:
-          image-names: endlessh-go
-          cut-off: One week ago UTC
-          account-type: personal
-          token: ${{ secrets.TOKEN_DELETE_GHCR_IMAGES }}
-          keep-at-least: 5
-          skip-tags: latest, development
-          filter-tags: "dev-*"
-          dry-run: False
-      # # Untagged images could be the images for different OS/Arch. Do not delete them.
-      # - name: Delete untagged images
-      #   uses: snok/container-retention-policy@v2
-      #   with:
-      #     image-names: endlessh-go
-      #     cut-off: One hour ago UTC
-      #     account-type: personal
-      #     token: ${{ secrets.TOKEN_DELETE_GHCR_IMAGES }}
-      #     keep-at-least: 0
-      #     untagged-only: True
-      #     skip-tags: latest, development
-      #     dry-run: False
-
 
