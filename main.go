@@ -42,23 +42,24 @@ func startSending(maxClients int64, bannerMaxLength int64, records chan<- metric
 				bytesSent, err := c.Send(bannerMaxLength)
 				remoteIpAddr := c.RemoteIpAddr()
 				localPort := c.LocalPort()
+				millisecondsSpent := c.MillisecondsSinceLast()
 				if err != nil {
 					c.Close()
 					records <- metrics.RecordEntry{
-						RecordType: metrics.RecordEntryTypeStop,
-						IpAddr:     remoteIpAddr,
-						LocalPort:  localPort,
+						RecordType:        metrics.RecordEntryTypeStop,
+						IpAddr:            remoteIpAddr,
+						LocalPort:         localPort,
+						MillisecondsSpent: millisecondsSpent,
 					}
 					return
 				}
-				millisecondsSpent := c.MillisecondsSinceLast()
 				clients <- c
 				records <- metrics.RecordEntry{
 					RecordType:        metrics.RecordEntryTypeSend,
 					IpAddr:            remoteIpAddr,
 					LocalPort:         localPort,
-					BytesSent:         bytesSent,
 					MillisecondsSpent: millisecondsSpent,
+					BytesSent:         bytesSent,
 				}
 			}()
 		}

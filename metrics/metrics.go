@@ -106,8 +106,8 @@ type RecordEntry struct {
 	RecordType        int
 	IpAddr            string
 	LocalPort         string
-	BytesSent         int
 	MillisecondsSpent int64
+	BytesSent         int
 }
 
 func StartRecording(maxClients int64, prometheusEnabled bool, prometheusCleanUnseenSeconds int, geoOption geoip.GeoOption) chan RecordEntry {
@@ -140,10 +140,15 @@ func StartRecording(maxClients int64, prometheusEnabled bool, prometheusCleanUns
 				clientSeconds.With(prometheus.Labels{
 					"ip":         r.IpAddr,
 					"local_port": r.LocalPort}).Add(secondsSpent)
-				totalBytes.With(prometheus.Labels{"local_port": r.LocalPort}).Add(float64(r.BytesSent))
 				totalSeconds.With(prometheus.Labels{"local_port": r.LocalPort}).Add(secondsSpent)
+				totalBytes.With(prometheus.Labels{"local_port": r.LocalPort}).Add(float64(r.BytesSent))
 				pq.Update(r.IpAddr, time.Now())
 			case RecordEntryTypeStop:
+				secondsSpent := float64(r.MillisecondsSpent) / 1000
+				clientSeconds.With(prometheus.Labels{
+					"ip":         r.IpAddr,
+					"local_port": r.LocalPort}).Add(secondsSpent)
+				totalSeconds.With(prometheus.Labels{"local_port": r.LocalPort}).Add(secondsSpent)
 				totalClientsClosed.With(prometheus.Labels{"local_port": r.LocalPort}).Inc()
 				pq.Update(r.IpAddr, time.Now())
 			case RecordEntryTypeClean:
