@@ -41,11 +41,11 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ github.repository }}
-            ghcr.io/${{ github.repository }}
+            ${{ github.repository }}-development
+            ghcr.io/${{ github.repository }}-development
           tags: |
             type=raw,value=dev-{{date 'X'}}
-            type=raw,value=development
+            type=raw,value=latest
             type=ref,event=branch
             type=edge,branch=main
       - name: Build and push ${{ github.repository }}:${{ steps.git.outputs.image_tag }}

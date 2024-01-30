@@ -22,7 +22,7 @@ go build .
 Alternatively, you can use the [docker image](https://hub.docker.com/r/shizunge/endlessh-go):
 
 ```
-sudo docker run -d -p 2222:2222 shizunge/endlessh-go -logtostderr -v=1
+docker run -d -p 2222:2222 shizunge/endlessh-go -logtostderr -v=1
 ```
 
 It listens to port `2222` by default.
