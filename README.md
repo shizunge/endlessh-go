@@ -39,12 +39,21 @@ Also check out [examples](./examples/README.md) for the setup of the full stack.
 
 ## Usage
 
+Endlessh-go offers two methods of configuration:
+
+### CLI Arguments
+
+By using command-line interface (CLI) arguments, you can configure Endlessh-go. By default, a few CLI arguments are already set.
+
+
 `./endlessh-go --help`
 
 ```
 Usage of ./endlessh-go
   -alsologtostderr
-        log to standard error as well as files
+        Log to standard error as well as files
+  -config_file string
+        Path to configuration file
   -conn_type string
         Connection type. Possible values are tcp, tcp4, tcp6 (default "tcp")
   -enable_prometheus
@@ -66,7 +75,7 @@ Usage of ./endlessh-go
   -logbuflevel int
         Buffer log messages logged at this level or lower (-1 means don't buffer; 0 means buffer INFO only; ...). Has limited applicability on non-prod platforms.
   -logtostderr
-        log to standard error instead of files
+        Log to standard error instead of files
   -max_clients int
         Maximum number of clients (default 4096)
   -max_mind_db string
@@ -82,12 +91,24 @@ Usage of ./endlessh-go
   -prometheus_port string
         The port for prometheus (default "2112")
   -stderrthreshold value
-        logs at or above this threshold go to stderr (default 2)
+        Logs at or above this threshold go to stderr (default 2)
   -v value
-        log level for V logs
+        Log level for V logs
   -vmodule value
-        comma-separated list of pattern=N settings for file-filtered logging
+        Comma-separated list of pattern=N settings for file-filtered logging
 ```
+
+
+### Configuration File
+
+Alternatively, you can define a yaml configuration file to configure Endlessh-go. By default, no configuration file is defined.
+
+If you wish to define a configuration file, you can use the ``-config_file /path/to/config_file.yml`` command. This will overwrite the default values.
+
+You will find an exemple of a configuration file in the [exemple section](exemple/config_file/endlessh-go.yml)
+
+**Please note that if both a configuration file and CLI arguments define the same options, the CLI arguments will take precedence and overwrite the configuration file.**
+
 
 ## Metrics
 
