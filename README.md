@@ -105,9 +105,28 @@ Alternatively, you can define a yaml configuration file to configure Endlessh-go
 
 If you wish to define a configuration file, you can use the ``-config_file /path/to/config_file.yml`` command. This will overwrite the default values.
 
-You will find an exemple of a configuration file in the [exemple section](exemple/config_file/endlessh-go.yml)
+You will find an exemple of a configuration file in the [exemple section](exemple/config-file.yml)
 
 **Please note that if both a configuration file and CLI arguments define the same options, the CLI arguments will take precedence and overwrite the configuration file.**
+
+### Environment Variables
+
+Alternatively, you can define environments variables to configure Endlessh-go. 
+
+You will find an exemple of a .env file in the [exemple section](exemple/env.exemple)
+
+**Please note that everything defined using CLI arguments (as well as config file) takes precedence over the environments variables.**
+
+
+### Precedence
+
+Precedence from highest to lowest:
+- Conmmand line arguments
+- Configuration file (declared in the command line)
+- Environment variables
+
+
+
 
 
 ## Metrics
