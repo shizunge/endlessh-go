@@ -51,7 +51,7 @@ By using command-line interface (CLI) arguments, you can configure Endlessh-go. 
 ```
 Usage of ./endlessh-go
   -alsologtostderr
-        Log to standard error as well as files
+        log to standard error as well as files
   -config_file string
         Path to configuration file
   -conn_type string
@@ -75,7 +75,7 @@ Usage of ./endlessh-go
   -logbuflevel int
         Buffer log messages logged at this level or lower (-1 means don't buffer; 0 means buffer INFO only; ...). Has limited applicability on non-prod platforms.
   -logtostderr
-        Log to standard error instead of files
+        log to standard error instead of files
   -max_clients int
         Maximum number of clients (default 4096)
   -max_mind_db string
@@ -91,9 +91,9 @@ Usage of ./endlessh-go
   -prometheus_port string
         The port for prometheus (default "2112")
   -stderrthreshold value
-        Logs at or above this threshold go to stderr (default 2)
+        logs at or above this threshold go to stderr (default 2)
   -v value
-        Log level for V logs
+        log level for V logs
   -vmodule value
         Comma-separated list of pattern=N settings for file-filtered logging
 ```
