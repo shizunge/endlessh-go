@@ -147,7 +147,10 @@ func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry) {
 	}
 	req.Header.Set("Key", apiKey)
 	req.Header.Set("Accept", "application/json")
-
+	glog.V(1).Infof(req.Header.Get("Key"))
+	glog.V(1).Infof(req.Header.Get("Accept"))
+	glog.V(1).Infof(string(payloadBytes))
+	glog.V(1).Infof("Reporting IP to AbuseIPDB: %s", ip)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		records <- metrics.RecordEntry{
