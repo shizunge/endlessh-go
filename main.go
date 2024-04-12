@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -120,10 +121,15 @@ func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry) {
 		}
 		return
 	}
+	payloadUrl := "https://api.abuseipdb.com/api/v2/report"
+	payload := url.Values{
+		"categories": {"18,22"},
+		"comment":    {"Unauthorized attempt to connect to ssh (endlessh-go)"},
+		"timestamp":  {time.Now().Format("2006-01-02T15:04:05-07:00")},
+		"ip":         {ip},
+	}
 
-	url := "https://api.abuseipdb.com/api/v2/report"
-	body := fmt.Sprintf("ip=%s&categories=18,22&comment=SSH login attempts (endlessh)", ip)
-	req, err := http.NewRequest("POST", url, strings.NewReader(body))
+	req, err := http.NewRequest("POST", payloadUrl, strings.NewReader(payload.Encode()))
 	if err != nil {
 		glog.V(1).Infof("Error creating request: %v", err)
 		records <- metrics.RecordEntry{
@@ -133,9 +139,11 @@ func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry) {
 		}
 		return
 	}
+
 	req.Header.Set("Key", apiKey)
 	req.Header.Set("Accept", "application/json")
 
+	glog.V(1).Infof("Final URL: %s", req.URL.String())
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		records <- metrics.RecordEntry{
