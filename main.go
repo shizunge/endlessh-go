@@ -18,8 +18,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
-	"encoding/json"
 	"endlessh-go/client"
 	"endlessh-go/geoip"
 	"endlessh-go/metrics"
@@ -103,6 +101,7 @@ func startAccepting(maxClients int64, connType, connHost, connPort string, inter
 
 func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry) {
 	if isCached(ip) {
+		glog.V(1).Infof("IP is already cached, skipping report")
 		records <- metrics.RecordEntry{
 			RecordType: metrics.RecordEntryTypeReport,
 			IpAddr:     ip,
@@ -113,6 +112,7 @@ func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry) {
 
 	apiKey := os.Getenv("ABUSE_IPDB_API_KEY")
 	if apiKey == "" {
+		glog.V(1).Infof("AbuseIPDB API key not set, skipping report")
 		records <- metrics.RecordEntry{
 			RecordType: metrics.RecordEntryTypeReport,
 			IpAddr:     ip,
@@ -120,24 +120,12 @@ func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry) {
 		}
 		return
 	}
-	url := "https://api.abuseipdb.com/api/v2/report"
-	payload := map[string]interface{}{
-		"ip":         ip,
-		"categories": []int{18, 22},
-		"comment":    "SSH login attempt (endlessh-go)",
-	}
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		records <- metrics.RecordEntry{
-			RecordType: metrics.RecordEntryTypeReport,
-			IpAddr:     ip,
-			Message:    fmt.Sprintf("Error encoding request body: %v", err),
-		}
-		return
-	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
+	url := "https://api.abuseipdb.com/api/v2/report"
+	body := fmt.Sprintf("ip=%s&categories=18,22&comment=SSH login attempts (endlessh)", ip)
+	req, err := http.NewRequest("POST", url, strings.NewReader(body))
 	if err != nil {
+		glog.V(1).Infof("Error creating request: %v", err)
 		records <- metrics.RecordEntry{
 			RecordType: metrics.RecordEntryTypeReport,
 			IpAddr:     ip,
@@ -147,10 +135,7 @@ func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry) {
 	}
 	req.Header.Set("Key", apiKey)
 	req.Header.Set("Accept", "application/json")
-	glog.V(1).Infof(req.Header.Get("Key"))
-	glog.V(1).Infof(req.Header.Get("Accept"))
-	glog.V(1).Infof(string(payloadBytes))
-	glog.V(1).Infof("Reporting IP to AbuseIPDB: %s", ip)
+
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		records <- metrics.RecordEntry{
@@ -162,6 +147,7 @@ func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry) {
 	}
 	defer resp.Body.Close()
 
+	glog.V(1).Infof("Reported IP to AbuseIPDB: %s", resp.Status)
 	records <- metrics.RecordEntry{
 		RecordType: metrics.RecordEntryTypeReport,
 		IpAddr:     ip,
