@@ -23,6 +23,7 @@ import (
 	"endlessh-go/metrics"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -121,7 +122,8 @@ func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry) {
 		}
 		return
 	}
-	payloadUrl := "https://api.abuseipdb.com/api/v2/report"
+
+	payloadURL := "https://api.abuseipdb.com/api/v2/report"
 	payload := url.Values{
 		"categories": {"18,22"},
 		"comment":    {"Unauthorized attempt to connect to ssh (endlessh-go)"},
@@ -129,7 +131,7 @@ func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry) {
 		"ip":         {ip},
 	}
 
-	req, err := http.NewRequest("POST", payloadUrl, strings.NewReader(payload.Encode()))
+	req, err := http.NewRequest("POST", payloadURL, strings.NewReader(payload.Encode()))
 	if err != nil {
 		glog.V(1).Infof("Error creating request: %v", err)
 		records <- metrics.RecordEntry{
@@ -143,7 +145,6 @@ func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry) {
 	req.Header.Set("Key", apiKey)
 	req.Header.Set("Accept", "application/json")
 
-	glog.V(1).Infof("Final URL: %s", req.URL.String())
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		records <- metrics.RecordEntry{
@@ -155,7 +156,23 @@ func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusUnprocessableEntity {
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			glog.V(1).Infof("Error reading response body: %v", err)
+		} else {
+			glog.V(1).Infof("Unprocessable Entity response from AbuseIPDB: %s", body)
+		}
+		records <- metrics.RecordEntry{
+			RecordType: metrics.RecordEntryTypeReport,
+			IpAddr:     ip,
+			Message:    fmt.Sprintf("Unprocessable Entity response from AbuseIPDB: %s", resp.Status),
+		}
+		return
+	}
+
 	glog.V(1).Infof("Reported IP to AbuseIPDB: %s", resp.Status)
+	glog.V(1).Infof("Final URL: %s", req.URL.String())
 	records <- metrics.RecordEntry{
 		RecordType: metrics.RecordEntryTypeReport,
 		IpAddr:     ip,
