@@ -26,7 +26,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -124,14 +123,10 @@ func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry) {
 	}
 
 	payloadURL := "https://api.abuseipdb.com/api/v2/report"
-	payload := url.Values{
-		"categories": {"18,22"},
-		"comment":    {"Unauthorized attempt to connect to ssh (endlessh-go)"},
-		"timestamp":  {time.Now().Format("2006-01-02T15:04:05-07:00")},
-		"ip":         {ip},
-	}
+	payload := fmt.Sprintf("ip=%s&categories=18,22&comment=Unauthorized attempt to connect to ssh (endlessh-go)&timestamp=%s",
+		ip, time.Now().Format("2006-01-02T15:04:05-07:00"))
 
-	req, err := http.NewRequest("POST", payloadURL, strings.NewReader(payload.Encode()))
+	req, err := http.NewRequest("POST", payloadURL, strings.NewReader(payload))
 	if err != nil {
 		glog.V(1).Infof("Error creating request: %v", err)
 		records <- metrics.RecordEntry{
