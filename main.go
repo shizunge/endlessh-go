@@ -17,12 +17,14 @@
 package main
 
 import (
+	"bufio"
 	"endlessh-go/client"
 	"endlessh-go/geoip"
 	"endlessh-go/metrics"
 	"flag"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -92,8 +94,106 @@ func startAccepting(maxClients int64, connType, connHost, connPort string, inter
 				LocalPort:  connPort,
 			}
 			clients <- c
+			go reportIPToAbuseIPDB(remoteIpAddr, records)
 		}
 	}()
+}
+
+func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry) {
+	if isCached(ip) {
+		records <- metrics.RecordEntry{
+			RecordType: metrics.RecordEntryTypeReport,
+			IpAddr:     ip,
+			Message:    "IP is already cached, skipping report",
+		}
+		return
+	}
+
+	apiKey := os.Getenv("ABUSE_IPDB_API_KEY")
+	if apiKey == "" {
+		records <- metrics.RecordEntry{
+			RecordType: metrics.RecordEntryTypeReport,
+			IpAddr:     ip,
+			Message:    "AbuseIPDB API key not set, skipping report",
+		}
+		return
+	}
+
+	url := "https://api.abuseipdb.com/api/v2/report"
+	body := fmt.Sprintf("ip=%s&categories=18,22&comment=SSH login attempts (endlessh)", ip)
+	req, err := http.NewRequest("POST", url, strings.NewReader(body))
+	if err != nil {
+		records <- metrics.RecordEntry{
+			RecordType: metrics.RecordEntryTypeReport,
+			IpAddr:     ip,
+			Message:    fmt.Sprintf("Error creating request: %v", err),
+		}
+		return
+	}
+	req.Header.Set("Key", apiKey)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		records <- metrics.RecordEntry{
+			RecordType: metrics.RecordEntryTypeReport,
+			IpAddr:     ip,
+			Message:    fmt.Sprintf("Error making request: %v", err),
+		}
+		return
+	}
+	defer resp.Body.Close()
+
+	records <- metrics.RecordEntry{
+		RecordType: metrics.RecordEntryTypeReport,
+		IpAddr:     ip,
+		Message:    fmt.Sprintf("Reported IP to AbuseIPDB: %s", resp.Status),
+	}
+
+	appendToReportedIPs(ip)
+}
+
+func isCached(ip string) bool {
+	cacheFile := "reportedIps.txt"
+	_, err := os.Stat(cacheFile)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	f, err := os.Open(cacheFile)
+	if err != nil {
+		glog.Errorf("Error opening cache file: %v", err)
+		return false
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		if scanner.Text() == ip {
+			return true
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		glog.Errorf("Error reading cache file: %v", err)
+	}
+
+	return false
+}
+
+func appendToReportedIPs(ip string) {
+	// Append the IP to the reportedIps.txt file
+	f, err := os.OpenFile("reportedIps.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		glog.Errorf("Error opening file: %v", err)
+		return
+	}
+	defer f.Close()
+
+	_, err = fmt.Fprintln(f, ip)
+	if err != nil {
+		glog.Errorf("Error writing to file: %v", err)
+	}
 }
 
 type arrayStrings []string

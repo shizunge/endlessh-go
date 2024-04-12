@@ -14,6 +14,7 @@ LABEL org.opencontainers.image.vendor="Shizun Ge"
 LABEL org.opencontainers.image.licenses=GPLv3
 
 COPY --from=build /endlessh/endlessh /endlessh
+COPY --from=build reportedIps.txt /app/reportedIps.txt
 EXPOSE 2222 2112
 USER nobody
 ENTRYPOINT  ["/endlessh"]
