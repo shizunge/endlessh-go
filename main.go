@@ -18,6 +18,8 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"endlessh-go/client"
 	"endlessh-go/geoip"
 	"endlessh-go/metrics"
@@ -118,10 +120,23 @@ func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry) {
 		}
 		return
 	}
-
 	url := "https://api.abuseipdb.com/api/v2/report"
-	body := fmt.Sprintf("ip=%s&categories=18,22&comment=SSH login attempts (endlessh)", ip)
-	req, err := http.NewRequest("POST", url, strings.NewReader(body))
+	payload := map[string]interface{}{
+		"ip":         ip,
+		"categories": []int{18, 22},
+		"comment":    "SSH login attempt (endlessh-go)",
+	}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		records <- metrics.RecordEntry{
+			RecordType: metrics.RecordEntryTypeReport,
+			IpAddr:     ip,
+			Message:    fmt.Sprintf("Error encoding request body: %v", err),
+		}
+		return
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		records <- metrics.RecordEntry{
 			RecordType: metrics.RecordEntryTypeReport,
