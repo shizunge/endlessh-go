@@ -70,7 +70,7 @@ func startSending(maxClients int64, bannerMaxLength int64, records chan<- metric
 	return clients
 }
 
-func startAccepting(maxClients int64, connType, connHost, connPort string, interval time.Duration, clients chan<- *client.Client, records chan<- metrics.RecordEntry) {
+func startAccepting(maxClients int64, connType, connHost, connPort string, interval time.Duration, clients chan<- *client.Client, records chan<- metrics.RecordEntry, abuseipdbeEnabled bool) {
 	go func() {
 		l, err := net.Listen(connType, connHost+":"+connPort)
 		if err != nil {
@@ -95,12 +95,15 @@ func startAccepting(maxClients int64, connType, connHost, connPort string, inter
 				LocalPort:  connPort,
 			}
 			clients <- c
-			go reportIPToAbuseIPDB(remoteIpAddr, records)
+			go reportIPToAbuseIPDB(remoteIpAddr, records, abuseipdbeEnabled)
 		}
 	}()
 }
 
-func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry) {
+func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry, abuseipdbeEnabled bool) {
+	if !abuseipdbeEnabled {
+		return
+	}
 	if isCached(ip) {
 		glog.V(1).Infof("IP is already cached, skipping report")
 		records <- metrics.RecordEntry{
@@ -165,7 +168,6 @@ func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry) {
 	}
 
 	glog.V(1).Infof("Reported IP to AbuseIPDB: %s", resp.Status)
-	glog.V(1).Infof("Final URL: %s", req.URL.String())
 	records <- metrics.RecordEntry{
 		RecordType: metrics.RecordEntryTypeReport,
 		IpAddr:     ip,
@@ -240,6 +242,7 @@ func main() {
 	connType := flag.String("conn_type", "tcp", "Connection type. Possible values are tcp, tcp4, tcp6")
 	connHost := flag.String("host", "0.0.0.0", "SSH listening address")
 	flag.Var(&connPorts, "port", fmt.Sprintf("SSH listening port. You may provide multiple -port flags to listen to multiple ports. (default %q)", defaultPort))
+	abuseipdbeEnabled := flag.Bool("enable_abuseipdb", false, "Enable AbuseIPDB reporting")
 	prometheusEnabled := flag.Bool("enable_prometheus", false, "Enable prometheus")
 	prometheusHost := flag.String("prometheus_host", "0.0.0.0", "The address for prometheus")
 	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
@@ -277,7 +280,7 @@ func main() {
 		connPorts = append(connPorts, defaultPort)
 	}
 	for _, connPort := range connPorts {
-		startAccepting(*maxClients, *connType, *connHost, connPort, interval, clients, records)
+		startAccepting(*maxClients, *connType, *connHost, connPort, interval, clients, records, *abuseipdbeEnabled)
 	}
 	for {
 		if *prometheusCleanUnseenSeconds <= 0 {

@@ -9,6 +9,7 @@ services:
     command:
       - "-logtostderr"
       - "-v=1"
+      - -enable_abuseipdb
       - "-geoip_supplier=max-mind-db"
       - "-max_mind_db=/geo-data/GeoLite2-City.mmdb"
     networks:
@@ -18,6 +19,8 @@ services:
       - 127.0.0.1:2112:2112 # Prometheus metrics port
     volumes:
       - ./geo-data/:/geo-data/:ro # geoip data
+    environment:
+      - ABUSE_IPDB_API_KEY=xxxxxx # AbuseIPDB API key
 
   geoipupdate:
     image: ghcr.io/maxmind/geoipupdate:v5

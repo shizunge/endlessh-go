@@ -49,6 +49,8 @@ Usage of ./endlessh-go
         Connection type. Possible values are tcp, tcp4, tcp6 (default "tcp")
   -enable_prometheus
         Enable prometheus
+  -enable_abuseipdb
+        Enable AbuseIPDB reporting (register for API key [here](https://www.abuseipdb.com))
   -geoip_supplier string
         Supplier to obtain Geohash of IPs. Possible values are "off", "ip-api", "max-mind-db" (default "off")
   -host string
@@ -104,11 +106,15 @@ Endlessh-go exports the following Prometheus metrics.
 
 The metrics is off by default, you can turn it via the CLI argument `-enable_prometheus`.
 
+AbuseIPDB reporting is also off by default, you can turn it on via the CLI argument '-enable_abuseipdb'
+
 It listens to port `2112` and entry point is `/metrics` by default. The port and entry point can be changed via CLI arguments.
 
 The endlessh-go server stores the geohash of attackers as a label on `endlessh_client_open_count`, which is also off by default. You can turn it on via the CLI argument `-geoip_supplier`. The endlessh-go uses service from [ip-api](https://ip-api.com/), which may enforce a query rate and limit commercial use. Visit their website for their terms and policies.
 
 You could also use an offline GeoIP database from [MaxMind](https://www.maxmind.com) by setting `-geoip_supplier` to _max-mind-db_ and `-max_mind_db` to the path of the database file.
+
+The AbuseIPDB reporting requires their free to use API available at their [website](https://www.abuseipdb.com/pricing), once you have it, add it as a docker environment variable `ABUSE_IPDB_API_KEY`
 
 ## Dashboard
 

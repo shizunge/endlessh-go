@@ -10,12 +10,15 @@ services:
       - -logtostderr
       - -v=1
       - -enable_prometheus
+      - -enable_abuseipdb
       - -geoip_supplier=ip-api
     networks:
       - example_network
     ports:
       - 2222:2222 # SSH port
       - 127.0.0.1:2112:2112 # Prometheus metrics port
+    environment:
+      - ABUSE_IPDB_API_KEY=xxxxxx # AbuseIPDB API key
 
   prometheus:
     image: prom/prometheus:latest
