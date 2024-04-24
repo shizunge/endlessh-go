@@ -47,10 +47,10 @@ Usage of ./endlessh-go
         log to standard error as well as files
   -conn_type string
         Connection type. Possible values are tcp, tcp4, tcp6 (default "tcp")
+  -enable_abuseipdb
+        Enable AbuseIPDB reporting
   -enable_prometheus
         Enable prometheus
-  -enable_abuseipdb
-        Enable AbuseIPDB reporting (register for API key [here](https://www.abuseipdb.com))
   -geoip_supplier string
         Supplier to obtain Geohash of IPs. Possible values are "off", "ip-api", "max-mind-db" (default "off")
   -host string
