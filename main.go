@@ -17,7 +17,6 @@
 package main
 
 import (
-	"bufio"
 	"endlessh-go/client"
 	"endlessh-go/geoip"
 	"endlessh-go/metrics"
@@ -31,6 +30,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/patrickmn/go-cache"
 )
 
 func startSending(maxClients int64, bannerMaxLength int64, records chan<- metrics.RecordEntry) chan *client.Client {
@@ -70,7 +70,7 @@ func startSending(maxClients int64, bannerMaxLength int64, records chan<- metric
 	return clients
 }
 
-func startAccepting(maxClients int64, connType, connHost, connPort string, interval time.Duration, clients chan<- *client.Client, records chan<- metrics.RecordEntry, abuseipdbeEnabled bool) {
+func startAccepting(maxClients int64, connType, connHost, connPort string, interval time.Duration, clients chan<- *client.Client, records chan<- metrics.RecordEntry, abuseipdbeEnabled bool, abuseIpdbApiKey string) {
 	go func() {
 		l, err := net.Listen(connType, connHost+":"+connPort)
 		if err != nil {
@@ -95,12 +95,12 @@ func startAccepting(maxClients int64, connType, connHost, connPort string, inter
 				LocalPort:  connPort,
 			}
 			clients <- c
-			go reportIPToAbuseIPDB(remoteIpAddr, records, abuseipdbeEnabled)
+			go reportIPToAbuseIPDB(remoteIpAddr, records, abuseipdbeEnabled, abuseIpdbApiKey)
 		}
 	}()
 }
 
-func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry, abuseipdbeEnabled bool) {
+func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry, abuseipdbeEnabled bool, abuseIpdbApiKey string) {
 	if !abuseipdbeEnabled {
 		return
 	}
@@ -114,8 +114,23 @@ func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry, abuseipd
 		return
 	}
 
-	apiKey := os.Getenv("ABUSE_IPDB_API_KEY")
-	if apiKey == "" {
+	var apiKey string
+	abuseIpdbApiKeyFile := "ABUSE_IPDB_API_KEY_FILE"
+	if abuseIpdbApiKey != "" {
+		apiKey = abuseIpdbApiKey
+	} else if abuseIpdbApiKeyFile != "" {
+		key, err := os.ReadFile(abuseIpdbApiKeyFile)
+		if err != nil {
+			glog.V(1).Infof("Error reading API key file: %v", err)
+			records <- metrics.RecordEntry{
+				RecordType: metrics.RecordEntryTypeReport,
+				IpAddr:     ip,
+				Message:    fmt.Sprintf("Error reading API key file: %v", err),
+			}
+			return
+		}
+		apiKey = strings.TrimSpace(string(key))
+	} else {
 		glog.V(1).Infof("AbuseIPDB API key not set, skipping report")
 		records <- metrics.RecordEntry{
 			RecordType: metrics.RecordEntryTypeReport,
@@ -177,47 +192,15 @@ func reportIPToAbuseIPDB(ip string, records chan<- metrics.RecordEntry, abuseipd
 	appendToReportedIPs(ip)
 }
 
+var reportedIPs = cache.New(15*time.Minute, 10*time.Minute)
+
 func isCached(ip string) bool {
-	cacheFile := "reportedIps.txt"
-	_, err := os.Stat(cacheFile)
-	if os.IsNotExist(err) {
-		return false
-	}
-
-	f, err := os.Open(cacheFile)
-	if err != nil {
-		glog.Errorf("Error opening cache file: %v", err)
-		return false
-	}
-	defer f.Close()
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		if scanner.Text() == ip {
-			return true
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		glog.Errorf("Error reading cache file: %v", err)
-	}
-
-	return false
+	_, found := reportedIPs.Get(ip)
+	return found
 }
 
 func appendToReportedIPs(ip string) {
-	// Append the IP to the reportedIps.txt file
-	f, err := os.OpenFile("reportedIps.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		glog.Errorf("Error opening file: %v", err)
-		return
-	}
-	defer f.Close()
-
-	_, err = fmt.Fprintln(f, ip)
-	if err != nil {
-		glog.Errorf("Error writing to file: %v", err)
-	}
+	reportedIPs.Set(ip, struct{}{}, cache.DefaultExpiration)
 }
 
 type arrayStrings []string
@@ -243,6 +226,7 @@ func main() {
 	connHost := flag.String("host", "0.0.0.0", "SSH listening address")
 	flag.Var(&connPorts, "port", fmt.Sprintf("SSH listening port. You may provide multiple -port flags to listen to multiple ports. (default %q)", defaultPort))
 	abuseipdbeEnabled := flag.Bool("enable_abuseipdb", false, "Enable AbuseIPDB reporting")
+	abuseIpdbApiKey := flag.String("abuse_ipdb_api_key", "", "AbuseIPDB API key")
 	prometheusEnabled := flag.Bool("enable_prometheus", false, "Enable prometheus")
 	prometheusHost := flag.String("prometheus_host", "0.0.0.0", "The address for prometheus")
 	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
@@ -280,7 +264,7 @@ func main() {
 		connPorts = append(connPorts, defaultPort)
 	}
 	for _, connPort := range connPorts {
-		startAccepting(*maxClients, *connType, *connHost, connPort, interval, clients, records, *abuseipdbeEnabled)
+		startAccepting(*maxClients, *connType, *connHost, connPort, interval, clients, records, *abuseipdbeEnabled, *abuseIpdbApiKey)
 	}
 	for {
 		if *prometheusCleanUnseenSeconds <= 0 {

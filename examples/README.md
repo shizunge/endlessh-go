@@ -10,6 +10,10 @@ An example how to setup endlessh-go, Prometheus, and Grafana using [docker compo
 
 An example how to setup endlessh-go with the Maxmind GeoIP Database.
 
+## [docker-abuseipdb](./docker-abuseipdb)
+An example how to setup endlessh-go with abuseIPDb reporting.
+Update the command `-abuse_ipdb_api_key "replace-this"` with the relevant API key which can he obtained [here](https://www.abuseipdb.com/pricing)
+
 ## FAQ
 ### Bind to privileged ports (<1024) in a container
 

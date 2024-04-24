@@ -43,6 +43,8 @@ Also check out [examples](./examples/README.md) for the setup of the full stack.
 
 ```
 Usage of ./endlessh-go
+  -abuse_ipdb_api_key string
+        AbuseIPDB API key
   -alsologtostderr
         log to standard error as well as files
   -conn_type string
