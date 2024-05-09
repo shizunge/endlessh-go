@@ -46,10 +46,11 @@ type Client struct {
 	start     time.Time
 	last      time.Time
 	interval  time.Duration
+	jitter    int64
 	bytesSent int
 }
 
-func NewClient(conn net.Conn, interval time.Duration, maxClients int64) *Client {
+func NewClient(conn net.Conn, interval time.Duration, jitter int64, maxClients int64) *Client {
 	for numCurrentClients >= maxClients {
 		time.Sleep(interval)
 	}
@@ -62,6 +63,7 @@ func NewClient(conn net.Conn, interval time.Duration, maxClients int64) *Client 
 		start:     time.Now(),
 		last:      time.Now(),
 		interval:  interval,
+		jitter:    jitter,
 		bytesSent: 0,
 	}
 }
@@ -78,7 +80,7 @@ func (c *Client) Send(bannerMaxLength int64) (int, error) {
 	if time.Now().Before(c.next) {
 		time.Sleep(c.next.Sub(time.Now()))
 	}
-	c.next = time.Now().Add(c.interval)
+	c.next = time.Now().Add(c.Interval())
 	length := rand.Int63n(bannerMaxLength)
 	bytesSent, err := c.conn.Write(randStringBytes(length))
 	if err != nil {
@@ -86,6 +88,15 @@ func (c *Client) Send(bannerMaxLength int64) (int, error) {
 	}
 	c.bytesSent += bytesSent
 	return bytesSent, nil
+}
+
+func (c *Client) Interval() time.Duration {
+	if c.jitter != 0 {
+		// generate an integer offset in the interval [-jitter, +jitter]
+		offset := time.Duration(rand.Int63n(2*c.jitter+1)-c.jitter) * time.Millisecond
+		return c.interval + offset
+	}
+	return c.interval
 }
 
 func (c *Client) MillisecondsSinceLast() int64 {
