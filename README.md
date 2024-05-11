@@ -53,6 +53,8 @@ Usage of ./endlessh-go
         Supplier to obtain Geohash of IPs. Possible values are "off", "ip-api", "max-mind-db" (default "off")
   -host string
         SSH listening address (default "0.0.0.0")
+  -interval_jitter int
+        Interval jitter as a percentage. Set to 0 to disable. (default 0)
   -interval_ms int
         Message millisecond delay (default 1000)
   -line_length int
