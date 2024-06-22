@@ -1,26 +1,21 @@
-version: '3.8'  # Use the latest supported version for more features
-
+version: '3.5'
 services:
+
   endlessh:
     container_name: endlessh
     image: shizunge/endlessh-go:latest
     restart: unless-stopped
+    #user: root
     command:
       - "-logtostderr"
       - "-v=1"
-      - "-enable_abuseipdb"
-      - "-abuse_ipdb_api_key_file=/run/secrets/abuse_ipdb_api_key"
+      - -enable_abuseipdb
+      - -abuse_ipdb_api_key ""
     networks:
       - example_network
     ports:
-      - "2222:2222" # SSH port
-      - "127.0.0.1:2112:2112" # Prometheus metrics port
-    secrets:
-      - abuse_ipdb_api_key
-
-secrets:
-  abuse_ipdb_api_key:
-    file: ./abuse_ipdb_api_key.txt  # Path to the file containing the secret on the host
+      - 2222:2222 # SSH port
+      - 127.0.0.1:2112:2112 # Prometheus metrics port
 
 networks:
-  example_network: 
+  example_network:
