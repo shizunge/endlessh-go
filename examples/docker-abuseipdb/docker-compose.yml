@@ -1,0 +1,26 @@
+version: '3.5'
+services:
+  endlessh:
+    container_name: endlessh
+    image: shizunge/endlessh-go:latest
+    restart: unless-stopped
+    command:
+      - "-logtostderr"
+      - "-v=1"
+      - "-enable_abuseipdb"
+    networks:
+      - example_network
+    ports:
+      - "2222:2222" # SSH port
+      - "127.0.0.1:2112:2112" # Prometheus metrics port
+    secrets:
+      - abuseipdb_api_key
+    environment:
+      ABUSE_IPDB_API_KEY_FILE: /run/secrets/abuseipdb_api_key
+
+networks:
+  example_network:
+
+secrets:
+  abuseipdb_api_key:
+    external: true # Ensure the secret is created beforehand with 'docker secret create'

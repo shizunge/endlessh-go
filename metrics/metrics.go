@@ -96,10 +96,11 @@ func InitPrometheus(prometheusHost, prometheusPort, prometheusEntry string) {
 }
 
 const (
-	RecordEntryTypeStart = iota
-	RecordEntryTypeSend  = iota
-	RecordEntryTypeStop  = iota
-	RecordEntryTypeClean = iota
+	RecordEntryTypeStart  = iota
+	RecordEntryTypeSend   = iota
+	RecordEntryTypeStop   = iota
+	RecordEntryTypeClean  = iota
+	RecordEntryTypeReport = iota
 )
 
 type RecordEntry struct {
@@ -108,6 +109,7 @@ type RecordEntry struct {
 	LocalPort         string
 	MillisecondsSpent int64
 	BytesSent         int
+	Message           string
 }
 
 func StartRecording(maxClients int64, prometheusEnabled bool, prometheusCleanUnseenSeconds int, geoOption geoip.GeoOption) chan RecordEntry {
