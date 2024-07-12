@@ -220,6 +220,8 @@ var connPorts arrayStrings
 
 func main() {
 	setupCache()
+
+	abuseIPDBApiKeyFlag := flag.String("abuse_ipdb_api_key", "", "AbuseIPDB API key")
 	intervalMs := flag.Int("interval_ms", 1000, "Message millisecond delay")
 	bannerMaxLength := flag.Int64("line_length", 32, "Maximum banner line length")
 	maxClients := flag.Int64("max_clients", 4096, "Maximum number of clients")
@@ -227,7 +229,6 @@ func main() {
 	connHost := flag.String("host", "0.0.0.0", "SSH listening address")
 	flag.Var(&connPorts, "port", fmt.Sprintf("SSH listening port. You may provide multiple -port flags to listen to multiple ports. (default %q)", defaultPort))
 	abuseipdbeEnabled := flag.Bool("enable_abuseipdb", false, "Enable AbuseIPDB reporting")
-	abuseIpdbApiKey := flag.String("abuse_ipdb_api_key", "", "AbuseIPDB API key")
 	prometheusEnabled := flag.Bool("enable_prometheus", false, "Enable prometheus")
 	prometheusHost := flag.String("prometheus_host", "0.0.0.0", "The address for prometheus")
 	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
@@ -241,6 +242,23 @@ func main() {
 		flag.PrintDefaults()
 	}
 	flag.Parse()
+
+	var apiKey string
+	if *abuseIPDBApiKeyFlag != "" {
+		apiKey = *abuseIPDBApiKeyFlag
+	} else {
+		abuseIPDBApiKeyFile := os.Getenv("ABUSE_IPDB_API_KEY_FILE")
+		if abuseIPDBApiKeyFile != "" {
+			key, err := os.ReadFile(abuseIPDBApiKeyFile)
+			if err != nil {
+				glog.Warningf("Error reading API key file: %v", err)
+			} else {
+				apiKey = strings.TrimSpace(string(key))
+			}
+		} else {
+			glog.Warning("Neither abuse_ipdb_api_key flag nor ABUSE_IPDB_API_KEY_FILE environment variable is set. AbuseIPDB reporting will be disabled.")
+		}
+	}
 
 	if *prometheusEnabled {
 		if *connType == "tcp6" && *prometheusHost == "0.0.0.0" {
@@ -265,7 +283,7 @@ func main() {
 		connPorts = append(connPorts, defaultPort)
 	}
 	for _, connPort := range connPorts {
-		startAccepting(*maxClients, *connType, *connHost, connPort, interval, clients, records, *abuseipdbeEnabled, *abuseIpdbApiKey)
+		startAccepting(*maxClients, *connType, *connHost, connPort, interval, clients, records, *abuseipdbeEnabled, apiKey)
 	}
 	for {
 		if *prometheusCleanUnseenSeconds <= 0 {
