@@ -5,7 +5,7 @@ go 1.21.0
 toolchain go1.21.4
 
 require (
-	github.com/golang/glog v1.2.0
+	github.com/golang/glog v1.2.2
 	github.com/oschwald/geoip2-golang v1.11.0
 	github.com/pierrre/geohash v1.1.1
 	github.com/prometheus/client_golang v1.19.1
