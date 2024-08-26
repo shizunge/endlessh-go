@@ -5,7 +5,7 @@ require (
 	github.com/golang/glog v1.2.2
 	github.com/oschwald/geoip2-golang v1.11.0
 	github.com/pierrre/geohash v1.1.2
-	github.com/prometheus/client_golang v1.20.0
+	github.com/prometheus/client_golang v1.20.2
 )
 
 require (
