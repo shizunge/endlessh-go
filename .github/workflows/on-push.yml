@@ -49,7 +49,7 @@ jobs:
             type=ref,event=branch
             type=edge,branch=main
       - name: Build and push ${{ github.repository }}:${{ steps.git.outputs.image_tag }}
-        uses: docker/build-push-action@v6.7.0
+        uses: docker/build-push-action@v6.9.0
         with:
           platforms: ${{ env.PLATFORMS }}
           push: true
