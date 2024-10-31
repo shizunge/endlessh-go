@@ -93,7 +93,7 @@ func InitPrometheus(prometheusHost, prometheusPort, prometheusEntry string) {
 		if strings.HasPrefix(prometheusHost, "unix:") {
 			socketPath := prometheusHost[5:]
 			glog.Infof("Starting Prometheus on Unix socket %v, entry point is /%v", socketPath, prometheusEntry)
-			os.Remove(socketPath) // allow failure
+			_ := os.Remove(socketPath) // allow failure
 			unixListener, err := net.Listen("unix", socketPath)
 			if err != nil {
 				glog.Errorf("Error starting Prometheus on socket %v: %v", socketPath, err)
