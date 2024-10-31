@@ -118,7 +118,7 @@ func serveOnUnixSocket(socketPath string) {
 
 func serveOnIpPort(ipPort string) {
 	if err := http.ListenAndServe(ipPort, nil); err != nil {
-		glog.Errorf("Error starting Prometheus at ip port %v: %v", ipPort, err)
+		glog.Errorf("Error starting Prometheus at IP port %v: %v", ipPort, err)
 		os.Exit(1)
 	}
 }
