@@ -96,7 +96,7 @@ func InitPrometheus(prometheusHost, prometheusPort, prometheusEntry string) {
 			serveOnUnixSocket(socketPath)
 		} else {
 			ipPort := prometheusHost+":"+prometheusPort
-			glog.Infof("Starting Prometheus on IP port %v:%v, entry point is /%v", ipPort, prometheusEntry)
+			glog.Infof("Starting Prometheus on IP port %v, entry point is /%v", ipPort, prometheusEntry)
 			serveOnIpPort(ipPort)
 		}
 		
