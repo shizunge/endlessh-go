@@ -21,6 +21,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"strings"
+	"net"
 
 	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
@@ -87,12 +89,38 @@ func InitPrometheus(prometheusHost, prometheusPort, prometheusEntry string) {
 	handler := promhttp.HandlerFor(promReg, promhttp.HandlerOpts{EnableOpenMetrics: true})
 	http.Handle("/"+prometheusEntry, handler)
 	go func() {
-		glog.Infof("Starting Prometheus on %v:%v, entry point is /%v", prometheusHost, prometheusPort, prometheusEntry)
-		if err := http.ListenAndServe(prometheusHost+":"+prometheusPort, nil); err != nil {
-			glog.Errorf("Error starting Prometheus at port %v:%v: %v", prometheusHost, prometheusPort, err)
-			os.Exit(1)
+
+		if strings.HasPrefix(prometheusHost, "unix:") {
+			socketPath := prometheusHost[5:] // trim the "unix:" prefix
+			glog.Infof("Starting Prometheus on Unix socket %v, entry point is /%v", socketPath, prometheusEntry)
+			serveOnUnixSocket(socketPath)
+		} else {
+			ipPort := prometheusHost+":"+prometheusPort
+			glog.Infof("Starting Prometheus on IP port %v, entry point is /%v", ipPort, prometheusEntry)
+			serveOnIpPort(ipPort)
 		}
+		
 	}()
+}
+
+func serveOnUnixSocket(socketPath string) {
+	_ = os.Remove(socketPath) // allow failure
+	unixListener, err := net.Listen("unix", socketPath)
+	if err != nil {
+		glog.Errorf("Error starting Prometheus on socket %v: %v", socketPath, err)
+		os.Exit(1)
+	}
+	if err := http.Serve(unixListener, nil); err != nil {
+		glog.Errorf("Error starting Prometheus at socket %v: %v", socketPath, err)
+		os.Exit(1)
+	}
+}
+
+func serveOnIpPort(ipPort string) {
+	if err := http.ListenAndServe(ipPort, nil); err != nil {
+		glog.Errorf("Error starting Prometheus at IP port %v: %v", ipPort, err)
+		os.Exit(1)
+	}
 }
 
 const (
