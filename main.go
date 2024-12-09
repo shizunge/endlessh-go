@@ -67,7 +67,7 @@ func startSending(maxClients int64, bannerMaxLength int64, records chan<- metric
 	return clients
 }
 
-func startAccepting(maxClients int64, connType, connHost, connPort string, interval time.Duration, clients chan<- *client.Client, records chan<- metrics.RecordEntry) {
+func startAccepting(maxClients int64, connType, connHost, connPort string, interval time.Duration, jitter int64, clients chan<- *client.Client, records chan<- metrics.RecordEntry) {
 	go func() {
 		l, err := net.Listen(connType, connHost+":"+connPort)
 		if err != nil {
@@ -84,7 +84,7 @@ func startAccepting(maxClients int64, connType, connHost, connPort string, inter
 				glog.Errorf("Error accepting connection from port %v: %v", connPort, err)
 				os.Exit(1)
 			}
-			c := client.NewClient(conn, interval, maxClients)
+			c := client.NewClient(conn, interval, jitter, maxClients)
 			remoteIpAddr := c.RemoteIpAddr()
 			records <- metrics.RecordEntry{
 				RecordType: metrics.RecordEntryTypeStart,
@@ -113,6 +113,7 @@ var connPorts arrayStrings
 
 func main() {
 	intervalMs := flag.Int("interval_ms", 1000, "Message millisecond delay")
+	intervalJitter := flag.Int64("interval_jitter", 0, "Interval jitter as a percentage. Set to 0 to disable. (default 0)")
 	bannerMaxLength := flag.Int64("line_length", 32, "Maximum banner line length")
 	maxClients := flag.Int64("max_clients", 4096, "Maximum number of clients")
 	connType := flag.String("conn_type", "tcp", "Connection type. Possible values are tcp, tcp4, tcp6")
@@ -154,8 +155,15 @@ func main() {
 	if len(connPorts) == 0 {
 		connPorts = append(connPorts, defaultPort)
 	}
+
+	if *intervalJitter < 0 || *intervalJitter > 100 {
+		glog.Errorf("Error: interval_jitter must be a number between 0 and 100. Got: %v", *intervalJitter)
+		os.Exit(1)
+	}
+	// use float to compute the jitter limit to avoid overflow
+	jitter := int64(float64(*intervalMs) * (float64(*intervalJitter) / 100))
 	for _, connPort := range connPorts {
-		startAccepting(*maxClients, *connType, *connHost, connPort, interval, clients, records)
+		startAccepting(*maxClients, *connType, *connHost, connPort, interval, jitter, clients, records)
 	}
 	for {
 		if *prometheusCleanUnseenSeconds <= 0 {
