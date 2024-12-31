@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"gopkg.in/yaml.v2"
 )
 
 func startSending(maxClients int64, bannerMaxLength int64, records chan<- metrics.RecordEntry) chan *client.Client {
@@ -111,20 +112,83 @@ const defaultPort = "2222"
 
 var connPorts arrayStrings
 
+type Config struct {
+	IntervalMs                 int    `yaml:"interval_ms"`
+	BannerMaxLength            int64  `yaml:"banner_max_length"`
+	MaxClients                 int64  `yaml:"max_clients"`
+	ConnType                   string `yaml:"conn_type"`
+	ConnHost                   string `yaml:"conn_host"`
+	ConnPort                   string `yaml:"conn_port"`
+	EnablePrometheus           bool   `yaml:"enable_prometheus"`
+	PrometheusHost             string `yaml:"prometheus_host"`
+	PrometheusPort             string `yaml:"prometheus_port"`
+	PrometheusEntry            string `yaml:"prometheus_entry"`
+	PrometheusCleanUnseenSeconds int    `yaml:"prometheus_clean_unseen_seconds"`
+	GeoipSupplier               string `yaml:"geoip_supplier"`
+	MaxMindDbFileName           string `yaml:"max_mind_db"`
+}
+
+func parseConfigFile(path string) (Config, error) {
+	config := Config{}
+	file, err := os.Open(path)
+	if err != nil {
+		return config, err
+	}
+	defer file.Close()
+
+	decoder := yaml.NewDecoder(file)
+	err = decoder.Decode(&config)
+	if err != nil {
+		return config, err
+	}
+
+	return config, nil
+}
+
 func main() {
-	intervalMs := flag.Int("interval_ms", 1000, "Message millisecond delay")
-	bannerMaxLength := flag.Int64("line_length", 32, "Maximum banner line length")
-	maxClients := flag.Int64("max_clients", 4096, "Maximum number of clients")
-	connType := flag.String("conn_type", "tcp", "Connection type. Possible values are tcp, tcp4, tcp6")
-	connHost := flag.String("host", "0.0.0.0", "SSH listening address")
-	flag.Var(&connPorts, "port", fmt.Sprintf("SSH listening port. You may provide multiple -port flags to listen to multiple ports. (default %q)", defaultPort))
-	prometheusEnabled := flag.Bool("enable_prometheus", false, "Enable prometheus")
-	prometheusHost := flag.String("prometheus_host", "0.0.0.0", "The address for prometheus")
-	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
-	prometheusEntry := flag.String("prometheus_entry", "metrics", "Entry point for prometheus")
-	prometheusCleanUnseenSeconds := flag.Int("prometheus_clean_unseen_seconds", 0, "Remove series if the IP is not seen for the given time. Set to 0 to disable. (default 0)")
-	geoipSupplier := flag.String("geoip_supplier", "off", "Supplier to obtain Geohash of IPs. Possible values are \"off\", \"ip-api\", \"max-mind-db\"")
-	maxMindDbFileName := flag.String("max_mind_db", "", "Path to the MaxMind DB file.")
+
+	configPath := flag.String("config-file", "", "Path to the configuration file")
+	flag.Parse()
+
+	var config Config
+	if *configPath != "" {
+		fileConfig, err := parseConfigFile(*configPath)
+		if err != nil {
+			glog.Errorf("Error parsing configuration file: %v", err)
+			os.Exit(1)
+		}
+		config = fileConfig
+	} else {
+		config = Config{
+			IntervalMs:                 1000,
+			BannerMaxLength:            32,
+			MaxClients:                 4096,
+			ConnType:                   "tcp",
+			ConnHost:                   "0.0.0.0",
+			ConnPort:                   defaultPort,
+			EnablePrometheus:           false,
+			PrometheusHost:             "0.0.0.0",
+			PrometheusPort:             "2112",
+			PrometheusEntry:            "metrics",
+			PrometheusCleanUnseenSeconds: 0,
+			GeoipSupplier:               "off",
+			MaxMindDbFileName:           "",
+		}
+	}
+
+	intervalMs := flag.Int("interval_ms", config.IntervalMs, "Message millisecond delay")
+	bannerMaxLength := flag.Int64("line_length", config.BannerMaxLength, "Maximum banner line length")
+	maxClients := flag.Int64("max_clients", config.MaxClients, "Maximum number of clients")
+	connType := flag.String("conn_type", config.ConnType, "Connection type. Possible values are tcp, tcp4, tcp6")
+	connHost := flag.String("host", config.ConnHost, "SSH listening address") 
+	flag.Var(&connPorts, "port", fmt.Sprintf("SSH listening port. You may provide multiple -port flags to listen to multiple ports. (default %q)", config.ConnPort))
+	prometheusEnabled := flag.Bool("enable_prometheus", config.EnablePrometheus, "Enable prometheus")
+	prometheusHost := flag.String("prometheus_host", config.PrometheusHost, "The address for prometheus")
+	prometheusPort := flag.String("prometheus_port", config.PrometheusPort, "The port for prometheus")
+	prometheusEntry := flag.String("prometheus_entry", config.PrometheusEntry, "Entry point for prometheus")
+	prometheusCleanUnseenSeconds := flag.Int("prometheus_clean_unseen_seconds", config.PrometheusCleanUnseenSeconds, "Remove series if the IP is not seen for the given time. Set to 0 to disable. (default 0)")
+	geoipSupplier := flag.String("geoip_supplier", config.GeoipSupplier, "Supplier to obtain Geohash of IPs. Possible values are \"off\", \"ip-api\", \"max-mind-db\"")
+	maxMindDbFileName := flag.String("max_mind_db", config.MaxMindDbFileName, "Path to the MaxMind DB file.")
 
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %v \n", os.Args[0])
