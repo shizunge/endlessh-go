@@ -3,7 +3,8 @@ name: On push
 on:
   push:
     branches-ignore:
-      - release
+      - 'release'
+      - 'dependabot/**'
     paths-ignore:
       - 'dashboard/*'
       - 'examples/*'
