@@ -40,7 +40,7 @@ jobs:
             type=ref,event=branch
             type=ref,event=tag
       - name: Build and push
-        uses: docker/build-push-action@v6.15.0
+        uses: docker/build-push-action@v6.16.0
         with:
           platforms: ${{ env.PLATFORMS }}
           push: true
