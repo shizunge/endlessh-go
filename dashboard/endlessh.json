@@ -919,7 +919,7 @@
           "refId": "A"
         }
       ],
-      "title": "Connections by country",
+      "title": "Connections by Country",
       "transformations": [
         {
           "id": "filterByRefId",
