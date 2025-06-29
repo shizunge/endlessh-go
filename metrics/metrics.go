@@ -153,7 +153,7 @@ func StartRecording(maxClients int64, prometheusEnabled bool, prometheusCleanUns
 			case RecordEntryTypeStart:
 				geohash, country, location, err := geoip.GeohashAndLocation(r.IpAddr, geoOption)
 				if err != nil {
-					glog.Warningf("Failed to obatin the geohash of %v: %v.", r.IpAddr, err)
+					glog.Warningf("Failed to obtain the geohash of %v: %v.", r.IpAddr, err)
 				}
 				clientIP.With(prometheus.Labels{
 					"ip":         r.IpAddr,
