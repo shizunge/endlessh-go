@@ -4,7 +4,7 @@ go 1.24.2
 
 require (
 	github.com/golang/glog v1.2.5
-	github.com/oschwald/geoip2-golang v1.11.0
+	github.com/oschwald/geoip2-golang v1.13.0
 	github.com/pierrre/geohash v1.1.3
 	github.com/prometheus/client_golang v1.22.0
 )
