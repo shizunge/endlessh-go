@@ -1,5 +1,12 @@
 # endlessh-go
 
+[![Release](https://img.shields.io/github/release/shizunge/endlessh-go.svg?label=Release)](https://github.com/shizunge/endlessh-go/releases/latest)
+[![License](https://img.shields.io/badge/License-GPLv3-blue)](https://github.com/shizunge/endlessh-go/blob/main/LICENSE)
+[![Image Size](https://img.shields.io/docker/image-size/shizunge/endlessh-go/latest.svg?label=Image%20Size)](https://hub.docker.com/r/shizunge/endlessh-go)
+[![Docker Pulls](https://img.shields.io/docker/pulls/shizunge/endlessh-go.svg?label=Docker%20Pulls&logo=Docker)](https://hub.docker.com/r/shizunge/endlessh-go)
+[![Build](https://img.shields.io/github/actions/workflow/status/shizunge/endlessh-go/on-push.yml?label=Build&branch=main&logo=GitHub)](https://github.com/shizunge/endlessh-go/actions/workflows/on-push.yml)
+[![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/shizunge/endlessh-go?label=CodeFactor&logo=CodeFactor)](https://www.codefactor.io/repository/github/shizunge/endlessh-go)
+
 A golang implementation of [endlessh](https://nullprogram.com/blog/2019/03/22/) exporting Prometheus metrics, visualized by a Grafana dashboard.
 
 ![screenshot](https://github.com/shizunge/endlessh-go/raw/main/dashboard/screenshot.png)
