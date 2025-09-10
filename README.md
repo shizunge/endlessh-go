@@ -88,6 +88,10 @@ Usage of ./endlessh-go
         The address for prometheus (default "0.0.0.0")
   -prometheus_port string
         The port for prometheus (default "2112")
+  -proxy_protocol_enabled
+        Enable PROXY protocol support. This causes the server to expect PROXY protocol headers on incoming connections.
+  -proxy_protocol_read_header_timeout_ms int
+        Timeout for reading the PROXY protocol header in milliseconds. If the connection does not send a valid PROXY protocol header in this time, the header is ignored. (default 200)
   -stderrthreshold value
         logs at or above this threshold go to stderr (default 2)
   -v value

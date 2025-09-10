@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	proxyproto "github.com/pires/go-proxyproto"
 )
 
 func startSending(maxClients int64, bannerMaxLength int64, records chan<- metrics.RecordEntry) chan *client.Client {
@@ -67,15 +68,22 @@ func startSending(maxClients int64, bannerMaxLength int64, records chan<- metric
 	return clients
 }
 
-func startAccepting(maxClients int64, connType, connHost, connPort string, interval time.Duration, clients chan<- *client.Client, records chan<- metrics.RecordEntry) {
+func startAccepting(maxClients int64, connType, connHost, connPort string, interval time.Duration, clients chan<- *client.Client, records chan<- metrics.RecordEntry, proxyProtocolEnabled bool, proxyProtocolReadHeaderTimeout int) {
 	go func() {
 		l, err := net.Listen(connType, connHost+":"+connPort)
 		if err != nil {
 			glog.Errorf("Error listening: %v", err)
 			os.Exit(1)
 		}
+
+		// Wrap the listener in a proxy protocol listener
+		if proxyProtocolEnabled {
+			l = &proxyproto.Listener{Listener: l, ReadHeaderTimeout: time.Duration(proxyProtocolReadHeaderTimeout) * time.Millisecond}
+		}
+
 		// Close the listener when the application closes.
 		defer l.Close()
+
 		glog.Infof("Listening on %v:%v", connHost, connPort)
 		for {
 			// Listen for an incoming connection.
@@ -125,6 +133,8 @@ func main() {
 	prometheusCleanUnseenSeconds := flag.Int("prometheus_clean_unseen_seconds", 0, "Remove series if the IP is not seen for the given time. Set to 0 to disable. (default 0)")
 	geoipSupplier := flag.String("geoip_supplier", "off", "Supplier to obtain Geohash of IPs. Possible values are \"off\", \"ip-api\", \"max-mind-db\"")
 	maxMindDbFileName := flag.String("max_mind_db", "", "Path to the MaxMind DB file.")
+	proxyProtocolEnabled := flag.Bool("proxy_protocol_enabled", false, "Enable PROXY protocol support. This causes the server to expect PROXY protocol headers on incoming connections.")
+	proxyProtocolReadHeaderTimeout := flag.Int("proxy_protocol_read_header_timeout_ms", 200, "Timeout for reading the PROXY protocol header in milliseconds. If the connection does not send a valid PROXY protocol header in this time, the header is ignored.")
 
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %v \n", os.Args[0])
@@ -155,7 +165,7 @@ func main() {
 		connPorts = append(connPorts, defaultPort)
 	}
 	for _, connPort := range connPorts {
-		startAccepting(*maxClients, *connType, *connHost, connPort, interval, clients, records)
+		startAccepting(*maxClients, *connType, *connHost, connPort, interval, clients, records, *proxyProtocolEnabled, *proxyProtocolReadHeaderTimeout)
 	}
 	for {
 		if *prometheusCleanUnseenSeconds <= 0 {
