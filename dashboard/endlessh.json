@@ -21,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "10.3.0-64399"
+      "version": "12.3.0-18356121373.patch9"
     },
     {
       "type": "panel",
@@ -76,10 +76,9 @@
       }
     ]
   },
-  "description": "Dashboard for endlessh (Fix current connections)",
+  "description": "Dashboard for endlessh (Add ports selection)",
   "editable": false,
   "fiscalYearStartMonth": 0,
-  "gnetId": 15156,
   "graphTooltip": 0,
   "id": null,
   "links": [
@@ -108,7 +107,6 @@
       "url": "https://grafana.com/grafana/dashboards/15156"
     }
   ],
-  "liveNow": false,
   "panels": [
     {
       "datasource": {
@@ -126,7 +124,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           }
@@ -147,6 +145,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -154,11 +153,12 @@
           "fields": "/^Total number connections that endlessh trapped$/",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-64399",
+      "pluginVersion": "12.3.0-18356121373.patch9",
       "targets": [
         {
           "datasource": {
@@ -166,7 +166,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "(endlessh_client_open_count{instance=~\"$host\",job=~\"$job\"} - endlessh_client_open_count{instance=~\"$host\",job=~\"$job\"} offset $__interval) > 0 or (endlessh_client_open_count{instance=~\"$host\",job=~\"$job\"}!=0 unless endlessh_client_open_count{instance=~\"$host\",job=~\"$job\"} offset $__interval)",
+          "expr": "(endlessh_client_open_count{instance=~\"$host\", local_port=~\"$port\",job=~\"$job\"} - endlessh_client_open_count{instance=~\"$host\",local_port=~\"$port\",job=~\"$job\"} offset $__interval) > 0 or (endlessh_client_open_count{instance=~\"$host\",local_port=~\"$port\",job=~\"$job\"}!=0 unless endlessh_client_open_count{instance=~\"$host\",local_port=~\"$port\",job=~\"$job\"} offset $__interval)",
           "format": "table",
           "instant": false,
           "legendFormat": "Seen {{ip}}",
@@ -179,7 +179,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "(endlessh_client_trapped_time_seconds{instance=~\"$host\",job=~\"$job\"} - endlessh_client_trapped_time_seconds{instance=~\"$host\",job=~\"$job\"} offset $__interval) > 0 or (endlessh_client_trapped_time_seconds{instance=~\"$host\",job=~\"$job\"}!=0 unless endlessh_client_trapped_time_seconds{instance=~\"$host\",job=~\"$job\"} offset $__interval)",
+          "expr": "(endlessh_client_trapped_time_seconds{instance=~\"$host\",local_port=~\"$port\",job=~\"$job\"} - endlessh_client_trapped_time_seconds{instance=~\"$host\",local_port=~\"$port\",job=~\"$job\"} offset $__interval) > 0 or (endlessh_client_trapped_time_seconds{instance=~\"$host\",local_port=~\"$port\",job=~\"$job\"}!=0 unless endlessh_client_trapped_time_seconds{instance=~\"$host\",local_port=~\"$port\",job=~\"$job\"} offset $__interval)",
           "format": "table",
           "hide": false,
           "instant": false,
@@ -271,7 +271,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -291,6 +291,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -298,11 +299,12 @@
           "fields": "/^Time spent on endlessh$/",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-64399",
+      "pluginVersion": "12.3.0-18356121373.patch9",
       "targets": [
         {
           "datasource": {
@@ -397,7 +399,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -417,6 +419,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -424,22 +427,25 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-64399",
+      "pluginVersion": "12.3.0-18356121373.patch9",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(increase(endlessh_sent_bytes_total{instance=~\"$host\",job=~\"$job\"}[$__range]))",
+          "expr": "sum(increase(endlessh_sent_bytes_total{instance=~\"$host\",local_port=~\"$port\",job=~\"$job\"}[$__range]))",
           "hide": false,
           "interval": "",
           "legendFormat": "Bytes sent by endlessh",
+          "range": true,
           "refId": "sent_bytes"
         }
       ],
@@ -462,7 +468,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           }
@@ -481,6 +487,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -488,11 +495,12 @@
           "fields": "/^Unique IPs connected$/",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-64399",
+      "pluginVersion": "12.3.0-18356121373.patch9",
       "targets": [
         {
           "datasource": {
@@ -576,7 +584,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           }
@@ -595,6 +603,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -602,11 +611,12 @@
           "fields": "/^Client IP of the latest connection$/",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
         "textMode": "value",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-64399",
+      "pluginVersion": "12.3.0-18356121373.patch9",
       "targets": [
         {
           "datasource": {
@@ -712,7 +722,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "#EAB839",
@@ -740,6 +750,7 @@
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -747,19 +758,21 @@
           "fields": "",
           "values": false
         },
+        "showPercentChange": false,
         "text": {},
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.3.0-64399",
+      "pluginVersion": "12.3.0-18356121373.patch9",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "editorMode": "code",
           "exemplar": true,
-          "expr": "sum((endlessh_client_open_count_total{instance=~\"$host\",job=~\"$job\"}) - (endlessh_client_closed_count_total{instance=~\"$host\",job=~\"$job\"} or endlessh_client_open_count_total{instance=~\"$host\",job=~\"$job\"} * 0))",
+          "expr": "sum((endlessh_client_open_count_total{instance=~\"$host\",local_port=~\"$port\",job=~\"$job\"}) - (endlessh_client_closed_count_total{instance=~\"$host\",local_port=~\"$port\",job=~\"$job\"} or endlessh_client_open_count_total{instance=~\"$host\",local_port=~\"$port\",job=~\"$job\"} * 0))",
           "instant": false,
           "interval": "",
           "legendFormat": "Open Connections",
@@ -786,6 +799,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -802,6 +816,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -812,13 +827,13 @@
             }
           },
           "mappings": [],
-          "min": -0.01,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           }
@@ -840,10 +855,12 @@
           "showLegend": false
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
+      "pluginVersion": "12.3.0-18356121373.patch9",
       "targets": [
         {
           "datasource": {
@@ -904,11 +921,14 @@
           "fields": "",
           "values": false
         },
+        "sort": "desc",
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
+      "pluginVersion": "12.3.0-18356121373.patch9",
       "targets": [
         {
           "datasource": {
@@ -1015,7 +1035,7 @@
             "steps": [
               {
                 "color": "#96D98D",
-                "value": null
+                "value": 0
               }
             ]
           }
@@ -1029,7 +1049,6 @@
         "y": 7
       },
       "id": 48,
-      "links": [],
       "options": {
         "basemap": {
           "config": {},
@@ -1094,10 +1113,11 @@
           "id": "zero",
           "lat": 0,
           "lon": 0,
+          "noRepeat": false,
           "zoom": 1
         }
       },
-      "pluginVersion": "10.3.0-64399",
+      "pluginVersion": "12.3.0-18356121373.patch9",
       "targets": [
         {
           "datasource": {
@@ -1194,6 +1214,9 @@
               "type": "auto"
             },
             "filterable": true,
+            "footer": {
+              "reducers": []
+            },
             "inspect": false,
             "minWidth": 50
           },
@@ -1204,7 +1227,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           }
@@ -1271,14 +1294,6 @@
       "id": 49,
       "options": {
         "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
         "frameIndex": 0,
         "showHeader": true,
         "sortBy": [
@@ -1288,7 +1303,7 @@
           }
         ]
       },
-      "pluginVersion": "10.3.0-64399",
+      "pluginVersion": "12.3.0-18356121373.patch9",
       "targets": [
         {
           "datasource": {
@@ -1461,7 +1476,7 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 39,
+  "schemaVersion": 42,
   "tags": [
     "prometheus"
   ],
@@ -1475,7 +1490,6 @@
           "uid": "${DS_PROMETHEUS}"
         },
         "definition": "label_values(endlessh_client_open_count_total, job)",
-        "hide": 0,
         "includeAll": true,
         "label": "Job",
         "multi": true,
@@ -1487,7 +1501,6 @@
         },
         "refresh": 2,
         "regex": "",
-        "skipUrlSync": false,
         "sort": 1,
         "type": "query"
       },
@@ -1499,7 +1512,6 @@
           "uid": "${DS_PROMETHEUS}"
         },
         "definition": "label_values(endlessh_client_open_count_total{job=~\"$job\"}, instance)",
-        "hide": 0,
         "includeAll": true,
         "label": "Host",
         "multi": true,
@@ -1511,7 +1523,26 @@
         },
         "refresh": 2,
         "regex": "",
-        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {},
+        "definition": "label_values(endlessh_client_open_count_total{job=~\"$job\", instance=~\"$host\"},local_port)",
+        "description": "",
+        "includeAll": true,
+        "label": "Port",
+        "multi": true,
+        "name": "port",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(endlessh_client_open_count_total{job=~\"$job\", instance=~\"$host\"},local_port)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
         "sort": 1,
         "type": "query"
       }
@@ -1525,6 +1556,6 @@
   "timezone": "",
   "title": "Endlessh",
   "uid": "ATIxYkO7k",
-  "version": 12,
+  "version": 13,
   "weekStart": ""
 }
