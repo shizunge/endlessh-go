@@ -1,0 +1,42 @@
+# Connection type. Possible values are tcp, tcp4, tcp6
+conn_type: "tcp"
+# Enable prometheus
+enable_prometheus: false
+# Supplier to obtain Geohash of IPs. Possible values are "off", "ip-api", "max-mind-db"
+geoip_supplier: "off"
+# SSH listening address
+host: "0.0.0.0"
+# Message millisecond delay
+interval_ms: 1000
+# Maximum banner line length
+line_length: 32
+# When logging hits line file:N, emit a stack trace
+log_backtrace_at: []
+# If non-empty, write log files in this directory
+log_dir: ""
+# If non-empty, add symbolic links in this directory to the log files
+log_link: ""
+# Buffer log messages logged at this level or lower
+logbuflevel: -1
+# Log to standard error instead of files
+logtostderr: false
+# Maximum number of clients
+max_clients: 4096
+# Path to the MaxMind DB file
+max_mind_db: ""
+# SSH listening port. You may provide multiple -port flags to listen to multiple ports.
+port: ["2222"]
+# Remove series if the IP is not seen for the given time. Set to 0 to disable.
+prometheus_clean_unseen_seconds: 0
+# Entry point for prometheus
+prometheus_entry: "metrics"
+# The address for prometheus
+prometheus_host: "0.0.0.0"
+# The port for prometheus
+prometheus_port: "2112"
+# Logs at or above this threshold go to stderr
+stderrthreshold: 2
+# Log level for V logs
+v: 2
+# Comma-separated list of pattern=N settings for file-filtered logging
+vmodule: []

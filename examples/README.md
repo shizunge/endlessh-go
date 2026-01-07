@@ -10,6 +10,14 @@ An example how to setup endlessh-go, Prometheus, and Grafana using [docker compo
 
 An example how to setup endlessh-go with the Maxmind GeoIP Database.
 
+## [env.exemple](./env.exemple)
+
+An example how to setup endlessh-go using environment file.
+
+## [config-file.yml](./config-file.yml)
+
+An example how to setup endlessh-go using a configuration file.
+
 ## FAQ
 ### Bind to privileged ports (<1024) in a container
 
