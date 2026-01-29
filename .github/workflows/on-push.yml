@@ -32,7 +32,7 @@ jobs:
         run: go mod download
 
       - name: Run Tests
-        run: go test -v 
+        run: go test -v ./...
   build_and_push:
     name: Build and push Docker image
     runs-on: ubuntu-latest

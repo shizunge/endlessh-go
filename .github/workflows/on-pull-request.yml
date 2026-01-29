@@ -31,7 +31,7 @@ jobs:
         run: go mod download
 
       - name: Run Tests
-        run: go test -v 
+        run: go test -v ./...
 
   build_container_image:
     name: Build Docker image
