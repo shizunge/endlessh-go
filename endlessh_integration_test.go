@@ -6,20 +6,20 @@ import (
 	"net"
 	"os/exec"
 	"regexp"
-	"strings"
 	"sync"
 	"testing"
 	"time"
 )
 
 const (
-	waitForListenTimeout = 10 * time.Second
-	pollInterval         = 50 * time.Millisecond
+	waitForListenTimeout  = 10 * time.Second
+	waitForConnectTimeout = 3 * time.Second
+	pollInterval          = 50 * time.Millisecond
 )
 
-func waitForLogMatch(stderr *bytes.Buffer, pattern string) bool {
+func waitForLogMatch(stderr *bytes.Buffer, pattern string, timeout time.Duration) bool {
 	re := regexp.MustCompile(pattern)
-	deadline := time.Now().Add(3 * time.Second)
+	deadline := time.Now().Add(timeout)
 	for {
 		if time.Now().After(deadline) {
 			return false
@@ -65,15 +65,8 @@ func TestEndlesshIntegration_MultiplePorts(t *testing.T) {
 		}
 	}()
 
-	deadline := time.Now().Add(waitForListenTimeout)
-	for {
-		if strings.Contains(stderr.String(), "Listening on") {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatalf("Timeout waiting for server to start, got logs: %s", stderr.String())
-		}
-		time.Sleep(pollInterval)
+	if !waitForLogMatch(&stderr, "Listening on", waitForListenTimeout) {
+		t.Fatalf("Timeout waiting for server to start, got logs: %s", stderr.String())
 	}
 	for _, port := range ports {
 		addr := fmt.Sprintf("localhost:%d", port)
@@ -81,12 +74,12 @@ func TestEndlesshIntegration_MultiplePorts(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to connect to server on port %d: %v", port, err)
 		}
-		if !waitForLogMatch(&stderr, "ACCEPT host=127.0.0.1") {
+		if !waitForLogMatch(&stderr, "ACCEPT host=127.0.0.1", waitForConnectTimeout) {
 			t.Errorf("Never saw any ACCEPT log, got logs: %s", stderr.String())
 		}
 		conn.Close()
 
-		if !waitForLogMatch(&stderr, "CLOSE host=127.0.0.1") {
+		if !waitForLogMatch(&stderr, "CLOSE host=127.0.0.1", waitForConnectTimeout) {
 			t.Errorf("Never saw any CLOSE log, got logs: %s", stderr.String())
 		}
 	}
@@ -105,15 +98,8 @@ func TestEndlesshIntegration_TarpitBehavior(t *testing.T) {
 		}
 	}()
 
-	deadline := time.Now().Add(waitForListenTimeout)
-	for {
-		if strings.Contains(stderr.String(), "Listening on") {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatalf("Timeout waiting for server to start, got logs: %s", stderr.String())
-		}
-		time.Sleep(pollInterval)
+	if !waitForLogMatch(&stderr, "Listening on", waitForListenTimeout) {
+		t.Fatalf("Timeout waiting for server to start, got logs: %s", stderr.String())
 	}
 
 	stderrOutput := stderr.String()
@@ -146,7 +132,7 @@ func TestEndlesshIntegration_TarpitBehavior(t *testing.T) {
 	}
 	t.Logf("Got first tarpit line (%d bytes): %q", n, buf[:n])
 
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	conn.SetReadDeadline(time.Now().Add(1 * time.Second))
 	n2, err := conn.Read(buf)
 	if err == nil && n2 > 0 {
@@ -169,15 +155,8 @@ func TestEndlesshIntegration_Concurrency(t *testing.T) {
 		}
 	}()
 
-	deadline := time.Now().Add(waitForListenTimeout)
-	for {
-		if strings.Contains(stderr.String(), "Listening on") {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatalf("Timeout waiting for server to start, got logs: %s", stderr.String())
-		}
-		time.Sleep(pollInterval)
+	if !waitForLogMatch(&stderr, "Listening on", waitForListenTimeout) {
+		t.Fatalf("Timeout waiting for server to start, got logs: %s", stderr.String())
 	}
 
 	stderrOutput := stderr.String()
@@ -272,7 +251,8 @@ func TestEndlesshIntegration_Concurrency(t *testing.T) {
 	}
 	mu.Unlock()
 	*/
-	// The 6th client does not necessarily fail at Dial; the server sometimes accepts
-	// more connections and applies max_clients at protocol/Read level instead.
-	// We leave this check removed while the implementation is in this state.
+	// The 6th client does not necessarily fail at Dial because max_clients is
+	// enforced at the protocol/Read stage instead of at Accept.
+	//
+	// TODO: Enforce max_clients at Accept so the N+1 client fails fast at Dial.
 }

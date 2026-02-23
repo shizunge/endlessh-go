@@ -93,7 +93,7 @@ func startAccepting(maxClients int64, connType, connHost, connPort string, inter
 		defer l.Close()
 
 		realAddr := l.Addr().(*net.TCPAddr)
-
+		localPortStr := strconv.Itoa(realAddr.Port)
 		glog.Infof("Listening on %v:%v", connHost, realAddr.Port)
 		for {
 			// Listen for an incoming connection.
@@ -107,7 +107,7 @@ func startAccepting(maxClients int64, connType, connHost, connPort string, inter
 			records <- metrics.RecordEntry{
 				RecordType: metrics.RecordEntryTypeStart,
 				IpAddr:     remoteIpAddr,
-				LocalPort:  strconv.Itoa(realAddr.Port),
+				LocalPort:  localPortStr,
 			}
 			clients <- c
 		}
