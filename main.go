@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -70,7 +71,14 @@ func startSending(maxClients int64, bannerMaxLength int64, records chan<- metric
 
 func startAccepting(maxClients int64, connType, connHost, connPort string, interval time.Duration, clients chan<- *client.Client, records chan<- metrics.RecordEntry, proxyProtocolEnabled bool, proxyProtocolReadHeaderTimeout int) {
 	go func() {
-		l, err := net.Listen(connType, connHost+":"+connPort)
+		connPortInt, err := strconv.Atoi(connPort)
+		if err != nil {
+			glog.Errorf("Invalid port: %v", err)
+			os.Exit(1)
+		}
+
+		addr := connHost + fmt.Sprintf(":%d", connPortInt)
+		l, err := net.Listen(connType, addr)
 		if err != nil {
 			glog.Errorf("Error listening: %v", err)
 			os.Exit(1)
@@ -84,7 +92,9 @@ func startAccepting(maxClients int64, connType, connHost, connPort string, inter
 		// Close the listener when the application closes.
 		defer l.Close()
 
-		glog.Infof("Listening on %v:%v", connHost, connPort)
+		realAddr := l.Addr().(*net.TCPAddr)
+		localPortStr := strconv.Itoa(realAddr.Port)
+		glog.Infof("Listening on %v:%v", connHost, realAddr.Port)
 		for {
 			// Listen for an incoming connection.
 			conn, err := l.Accept()
@@ -97,7 +107,7 @@ func startAccepting(maxClients int64, connType, connHost, connPort string, inter
 			records <- metrics.RecordEntry{
 				RecordType: metrics.RecordEntryTypeStart,
 				IpAddr:     remoteIpAddr,
-				LocalPort:  connPort,
+				LocalPort:  localPortStr,
 			}
 			clients <- c
 		}
