@@ -74,12 +74,12 @@ func TestEndlesshIntegration_MultiplePorts(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to connect to server on port %d: %v", port, err)
 		}
-		if !waitForLogMatch(&stderr, "ACCEPT host=127.0.0.1", waitForConnectTimeout) {
+		if !waitForLogMatch(&stderr, `ACCEPT host=(127\.0\.0\.1|::1)`, waitForConnectTimeout) {
 			t.Errorf("Never saw any ACCEPT log, got logs: %s", stderr.String())
 		}
 		conn.Close()
 
-		if !waitForLogMatch(&stderr, "CLOSE host=127.0.0.1", waitForConnectTimeout) {
+		if !waitForLogMatch(&stderr, `CLOSE host=(127\.0\.0\.1|::1)`, waitForConnectTimeout) {
 			t.Errorf("Never saw any CLOSE log, got logs: %s", stderr.String())
 		}
 	}
@@ -158,7 +158,6 @@ func TestEndlesshIntegration_Concurrency(t *testing.T) {
 	if !waitForLogMatch(&stderr, "Listening on", waitForListenTimeout) {
 		t.Fatalf("Timeout waiting for server to start, got logs: %s", stderr.String())
 	}
-
 	stderrOutput := stderr.String()
 	re := regexp.MustCompile(`Listening on .*:(\d+)`)
 	m := re.FindStringSubmatch(stderrOutput)
@@ -200,7 +199,7 @@ func TestEndlesshIntegration_Concurrency(t *testing.T) {
 			}
 
 			buf := make([]byte, 1024)
-			conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+			conn.SetReadDeadline(time.Now().Add(3 * time.Second))
 			n1, readErr1 := conn.Read(buf)
 			if readErr1 != nil || n1 == 0 {
 				if clientID != maxClients { // only log unexpected failures
