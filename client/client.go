@@ -41,28 +41,35 @@ func randStringBytes(n int64) []byte {
 }
 
 type Client struct {
-	conn      net.Conn
-	next      time.Time
-	start     time.Time
-	last      time.Time
-	interval  time.Duration
-	bytesSent int
+	conn          net.Conn
+	next          time.Time
+	start         time.Time
+	last          time.Time
+	interval      time.Duration
+	writeDeadline time.Duration
+	bytesSent     int
 }
 
-func NewClient(conn net.Conn, interval time.Duration, maxClients int64) *Client {
+func NewClient(conn net.Conn, interval time.Duration, maxClients int64, writeDeadline time.Duration) *Client {
 	for numCurrentClients >= maxClients {
 		time.Sleep(interval)
 	}
 	atomic.AddInt64(&numCurrentClients, 1)
+	// Enable TCP keepalive to detect dead peers at the kernel level.
+	if tcpConn, ok := conn.(*net.TCPConn); ok {
+		tcpConn.SetKeepAlive(true)
+		tcpConn.SetKeepAlivePeriod(30 * time.Second)
+	}
 	addr := conn.RemoteAddr().(*net.TCPAddr)
 	glog.V(1).Infof("ACCEPT host=%v port=%v n=%v/%v\n", addr.IP, addr.Port, numCurrentClients, maxClients)
 	return &Client{
-		conn:      conn,
-		next:      time.Now().Add(interval),
-		start:     time.Now(),
-		last:      time.Now(),
-		interval:  interval,
-		bytesSent: 0,
+		conn:          conn,
+		next:          time.Now().Add(interval),
+		start:         time.Now(),
+		last:          time.Now(),
+		interval:      interval,
+		writeDeadline: writeDeadline,
+		bytesSent:     0,
 	}
 }
 
@@ -80,6 +87,12 @@ func (c *Client) Send(bannerMaxLength int64) (int, error) {
 	}
 	c.next = time.Now().Add(c.interval)
 	length := rand.Int63n(bannerMaxLength)
+	// Set a write deadline to detect dead connections where the kernel
+	// buffers data but the remote peer is gone. Without this, Write()
+	// can succeed indefinitely on dead connections, causing goroutine leaks.
+	if c.writeDeadline > 0 {
+		c.conn.SetWriteDeadline(time.Now().Add(c.writeDeadline))
+	}
 	bytesSent, err := c.conn.Write(randStringBytes(length))
 	if err != nil {
 		return 0, err
