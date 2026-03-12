@@ -41,13 +41,6 @@ func startSending(maxClients int64, bannerMaxLength int64, records chan<- metric
 				return
 			}
 			go func() {
-				// Recover from unexpected panics to ensure client cleanup.
-				defer func() {
-					if r := recover(); r != nil {
-						glog.Errorf("Recovered panic in send goroutine: %v", r)
-						c.Close()
-					}
-				}()
 				bytesSent, err := c.Send(bannerMaxLength)
 				remoteIpAddr := c.RemoteIpAddr()
 				localPort := c.LocalPort()
