@@ -76,7 +76,7 @@ func startSending(maxClients int64, bannerMaxLength int64, records chan<- metric
 	return clients
 }
 
-func startAccepting(maxClients int64, connType, connHost, connPort string, interval time.Duration, writeDeadline time.Duration, clients chan<- *client.Client, records chan<- metrics.RecordEntry, proxyProtocolEnabled bool, proxyProtocolReadHeaderTimeout int) {
+func startAccepting(maxClients int64, connType, connHost, connPort string, interval time.Duration, clients chan<- *client.Client, records chan<- metrics.RecordEntry, proxyProtocolEnabled bool, proxyProtocolReadHeaderTimeout int) {
 	go func() {
 		connPortInt, err := strconv.Atoi(connPort)
 		if err != nil {
@@ -109,7 +109,7 @@ func startAccepting(maxClients int64, connType, connHost, connPort string, inter
 				glog.Errorf("Error accepting connection from port %v: %v", connPort, err)
 				os.Exit(1)
 			}
-			c := client.NewClient(conn, interval, maxClients, writeDeadline)
+			c := client.NewClient(conn, interval, maxClients)
 			remoteIpAddr := c.RemoteIpAddr()
 			records <- metrics.RecordEntry{
 				RecordType: metrics.RecordEntryTypeStart,
@@ -150,7 +150,6 @@ func main() {
 	prometheusCleanUnseenSeconds := flag.Int("prometheus_clean_unseen_seconds", 0, "Remove series if the IP is not seen for the given time. Set to 0 to disable. (default 0)")
 	geoipSupplier := flag.String("geoip_supplier", "off", "Supplier to obtain Geohash of IPs. Possible values are \"off\", \"ip-api\", \"max-mind-db\"")
 	maxMindDbFileName := flag.String("max_mind_db", "", "Path to the MaxMind DB file.")
-	writeDeadlineMs := flag.Int("write_deadline_ms", 30000, "Write deadline in milliseconds for sending tarpit data. Detects dead connections where the kernel buffers data but the remote peer is gone. Set to 0 to disable. (default 30000)")
 	proxyProtocolEnabled := flag.Bool("proxy_protocol_enabled", false, "Enable PROXY protocol support. This causes the server to expect PROXY protocol headers on incoming connections.")
 	proxyProtocolReadHeaderTimeout := flag.Int("proxy_protocol_read_header_timeout_ms", 200, "Timeout for reading the PROXY protocol header in milliseconds. If the connection does not send a valid PROXY protocol header in this time, the header is ignored.")
 
@@ -175,7 +174,6 @@ func main() {
 	clients := startSending(*maxClients, *bannerMaxLength, records)
 
 	interval := time.Duration(*intervalMs) * time.Millisecond
-	writeDeadline := time.Duration(*writeDeadlineMs) * time.Millisecond
 	// Listen for incoming connections.
 	if *connType == "tcp6" && *connHost == "0.0.0.0" {
 		*connHost = "[::]"
@@ -184,7 +182,7 @@ func main() {
 		connPorts = append(connPorts, defaultPort)
 	}
 	for _, connPort := range connPorts {
-		startAccepting(*maxClients, *connType, *connHost, connPort, interval, writeDeadline, clients, records, *proxyProtocolEnabled, *proxyProtocolReadHeaderTimeout)
+		startAccepting(*maxClients, *connType, *connHost, connPort, interval, clients, records, *proxyProtocolEnabled, *proxyProtocolReadHeaderTimeout)
 	}
 	for {
 		if *prometheusCleanUnseenSeconds <= 0 {
