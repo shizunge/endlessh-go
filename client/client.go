@@ -54,6 +54,11 @@ func NewClient(conn net.Conn, interval time.Duration, maxClients int64) *Client 
 		time.Sleep(interval)
 	}
 	atomic.AddInt64(&numCurrentClients, 1)
+	// Enable TCP keepalive to detect dead peers at the kernel level.
+	if tcpConn, ok := conn.(*net.TCPConn); ok {
+		tcpConn.SetKeepAlive(true)
+		tcpConn.SetKeepAlivePeriod(30 * time.Second)
+	}
 	addr := conn.RemoteAddr().(*net.TCPAddr)
 	glog.V(1).Infof("ACCEPT host=%v port=%v n=%v/%v\n", addr.IP, addr.Port, numCurrentClients, maxClients)
 	return &Client{
@@ -80,6 +85,10 @@ func (c *Client) Send(bannerMaxLength int64) (int, error) {
 	}
 	c.next = time.Now().Add(c.interval)
 	length := rand.Int63n(bannerMaxLength)
+	// Set a write deadline to detect dead connections where the kernel
+	// buffers data but the remote peer is gone. Without this, Write()
+	// can succeed indefinitely on dead connections, causing goroutine leaks.
+	c.conn.SetWriteDeadline(time.Now().Add(c.interval))
 	bytesSent, err := c.conn.Write(randStringBytes(length))
 	if err != nil {
 		return 0, err
