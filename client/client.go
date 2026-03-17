@@ -55,9 +55,21 @@ func NewClient(conn net.Conn, interval time.Duration, maxClients int64) *Client 
 	}
 	atomic.AddInt64(&numCurrentClients, 1)
 	// Enable TCP keepalive to detect dead peers at the kernel level.
+	// This is a safety net for long intervals where the write deadline
+	// alone would be too slow to detect dead connections. For example,
+	// with interval=10min, without keepalive a ghost connection would
+	// go undetected for 10+ minutes.
+	// Keepalive cannot detect peers that are alive at the TCP level
+	// (kernel still responds to probes) but stalled at the application
+	// level — the write deadline in Send() covers that case.
+	// Detection time: ~idle + 9 probes (e.g. 10s + 9×10s ≈ 100s on Linux).
 	if tcpConn, ok := conn.(*net.TCPConn); ok {
 		tcpConn.SetKeepAlive(true)
-		tcpConn.SetKeepAlivePeriod(30 * time.Second)
+		keepalive := interval
+		if keepalive > 30*time.Second {
+			keepalive = 30 * time.Second
+		}
+		tcpConn.SetKeepAlivePeriod(keepalive)
 	}
 	addr := conn.RemoteAddr().(*net.TCPAddr)
 	glog.V(1).Infof("ACCEPT host=%v port=%v n=%v/%v\n", addr.IP, addr.Port, numCurrentClients, maxClients)
