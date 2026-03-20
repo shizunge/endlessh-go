@@ -6,6 +6,7 @@ import (
 	"net"
 	"os/exec"
 	"regexp"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -254,4 +255,70 @@ func TestEndlesshIntegration_Concurrency(t *testing.T) {
 	// enforced at the protocol/Read stage instead of at Accept.
 	//
 	// TODO: Enforce max_clients at Accept so the N+1 client fails fast at Dial.
+}
+
+func TestEndlesshIntegration_PrometheusMetrics(t *testing.T) {
+	var stderr bytes.Buffer
+
+	cmd := exec.Command(
+		"go", "run", "main.go",
+		"-port=0",
+		"-enable_prometheus",
+		"-prometheus_port=0",
+		"-interval_ms=100",
+		"-logtostderr", "-v=1",
+	)
+	cmd.Stderr = &stderr
+
+	if err := cmd.Start(); err != nil {
+		t.Fatalf("Failed to start server: %v", err)
+	}
+	defer cmd.Process.Kill()
+
+	if !waitForLogMatch(&stderr, "Starting Prometheus", waitForListenTimeout) {
+		t.Fatalf("Prometheus did not start: %s", stderr.String())
+	}
+
+	reProm := regexp.MustCompile(`Prometheus on IP port .*:(\d+)`)
+	reMain := regexp.MustCompile(`Listening on .*:(\d+)`)
+
+	promMatch := reProm.FindStringSubmatch(stderr.String())
+	mainMatch := reMain.FindStringSubmatch(stderr.String())
+
+	if len(promMatch) < 2 || len(mainMatch) < 2 {
+		t.Fatalf("Could not parse ports: %s", stderr.String())
+	}
+
+	promPort := promMatch[1]
+	mainPort := mainMatch[1]
+
+	conn, err := net.Dial("tcp", "localhost:"+mainPort)
+	if err != nil {
+		t.Fatalf("Dial failed: %v", err)
+	}
+	defer conn.Close()
+
+	conn.Write([]byte("SSH-2.0-test\r\n"))
+
+	time.Sleep(500 * time.Millisecond)
+
+	// Fetch metrics
+	resp, err := net.Dial("tcp", "localhost:"+promPort)
+	if err != nil {
+		t.Fatalf("Failed to connect to metrics endpoint: %v", err)
+	}
+
+	fmt.Fprintf(resp, "GET /metrics HTTP/1.1\r\nHost: localhost\r\n\r\n")
+
+	buf := make([]byte, 8192)
+	n, _ := resp.Read(buf)
+	body := string(buf[:n])
+
+	if !strings.Contains(body, "endlessh_client_open_count_total") {
+		t.Errorf("Missing expected metric in output:\n%s", body)
+	}
+
+	if !strings.Contains(body, "endlessh_sent_bytes_total") {
+		t.Errorf("Expected bytes metric not found:\n%s", body)
+	}
 }
