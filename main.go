@@ -156,6 +156,15 @@ func main() {
 		if *connType == "tcp6" && *prometheusHost == "0.0.0.0" {
 			*prometheusHost = "[::]"
 		}
+		if *prometheusPort == "0" || *prometheusPort == "" {
+			l, err := net.Listen("tcp", *prometheusHost+":0")
+			if err != nil {
+				glog.Fatalf("Failed to pick a free Prometheus port: %v", err)
+			}
+			actualPort := l.Addr().(*net.TCPAddr).Port
+			*prometheusPort = strconv.Itoa(actualPort)
+			l.Close()
+		}
 		metrics.InitPrometheus(*prometheusHost, *prometheusPort, *prometheusEntry)
 	}
 
