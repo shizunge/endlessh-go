@@ -1,0 +1,10 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: endlessh
+spec:
+  endpoints:
+    - interval: 60s
+      path: /metrics
+      port: metrics
+  jobLabel: app.kubernetes.io/name

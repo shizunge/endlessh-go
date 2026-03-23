@@ -1,0 +1,21 @@
+resources:
+  - deployment.yaml
+  - service.yaml
+  - monitor.yaml
+configMapGenerator:
+  - name: endlessh-dashboard
+    files:
+      - dashboard.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+labels:
+  - pairs:
+      app.kubernetes.io/name: endlessh
+    includeSelectors: true
+    includeTemplates: true
+    fields:
+      - group: monitoring.coreos.com
+        kind: ServiceMonitor
+        path: spec/selector/matchLabels
+        create: true
