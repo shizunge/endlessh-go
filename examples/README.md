@@ -6,11 +6,16 @@
 
 An example how to setup endlessh-go, Prometheus, and Grafana using [docker compose](https://docs.docker.com/compose/).
 
+## [kustomize-simple](./kustomize-simple)
+
+An example how to setup endlessh-go using [kustomize](https://kustomize.io/).
+
 ## [docker-maxmind](./docker-maxmind)
 
 An example how to setup endlessh-go with the Maxmind GeoIP Database.
 
 ## FAQ
+
 ### Bind to privileged ports (<1024) in a container
 
 You need to add capability `NET_BIND_SERVICE` to the program.

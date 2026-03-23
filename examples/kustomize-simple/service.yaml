@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: endlessh
+spec:
+  ports:
+    - name: ssh
+      port: 22
+      targetPort: ssh
+      protocol: TCP
+    - name: metrics
+      port: 2112
+      targetPort: metrics
+      protocol: TCP

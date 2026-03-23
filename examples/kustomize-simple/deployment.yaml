@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: endlessh
+spec:
+  replicas: 1
+  template:
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: endlessh
+          image: shizunge/endlessh-go:latest
+          args:
+            - -interval_ms=1000
+            - -logtostderr
+            - -v=1
+            - -enable_prometheus
+            - -geoip_supplier=ip-api
+            - -host=[::]
+            - -prometheus_host=[::]
+          ports:
+            - name: ssh
+              containerPort: 2222
+            - name: metrics
+              containerPort: 2112
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
