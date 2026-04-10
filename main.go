@@ -19,6 +19,7 @@ package main
 import (
 	"endlessh-go/client"
 	"endlessh-go/geoip"
+	"endlessh-go/health"
 	"endlessh-go/metrics"
 	"flag"
 	"fmt"
@@ -145,12 +146,21 @@ func main() {
 	maxMindDbFileName := flag.String("max_mind_db", "", "Path to the MaxMind DB file.")
 	proxyProtocolEnabled := flag.Bool("proxy_protocol_enabled", false, "Enable PROXY protocol support. This causes the server to expect PROXY protocol headers on incoming connections.")
 	proxyProtocolReadHeaderTimeout := flag.Int("proxy_protocol_read_header_timeout_ms", 200, "Timeout for reading the PROXY protocol header in milliseconds. If the connection does not send a valid PROXY protocol header in this time, the header is ignored.")
+	healthcheckPort := flag.String("healthcheck_port", health.DefaultPort, "TCP port for container healthcheck; accepts connectionsand closes without logging or metrics")
+	healthcheck := flag.Bool("healthcheck", false, "Dial healthcheck_port on 127.0.0.1 and exit 0 if reachable (for container healthcheck)")
 
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %v \n", os.Args[0])
 		flag.PrintDefaults()
 	}
 	flag.Parse()
+
+	if *healthcheck {
+		if !health.Probe(*healthcheckPort) {
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
 
 	if *prometheusEnabled {
 		if *connType == "tcp6" && *prometheusHost == "0.0.0.0" {
@@ -183,6 +193,7 @@ func main() {
 	if len(connPorts) == 0 {
 		connPorts = append(connPorts, defaultPort)
 	}
+	health.StartListener(*healthcheckPort)
 	for _, connPort := range connPorts {
 		startAccepting(*maxClients, *connType, *connHost, connPort, interval, clients, records, *proxyProtocolEnabled, *proxyProtocolReadHeaderTimeout)
 	}
