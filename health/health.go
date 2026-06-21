@@ -17,7 +17,9 @@
 package health
 
 import (
+	"encoding/json"
 	"net"
+	"net/http"
 	"os"
 	"time"
 
@@ -27,36 +29,58 @@ import (
 const (
 	DefaultHost    = "127.0.0.1"
 	DefaultPort    = "51000"
+	DefaultPath    = "/health"
 	DefaultTimeout = 3 * time.Second
 )
 
+type response struct {
+	Status string  `json:"status"` // always "ok"
+	Uptime float64 `json:"uptime"` // in seconds
+}
+
+var startTime time.Time
+
 func StartListener(host, port string) {
-	addr := host + ":" + port
+	startTime = time.Now()
+	mux := http.NewServeMux()
+	mux.HandleFunc(DefaultPath, handleHealth)
+	addr := net.JoinHostPort(host, port)
 	go func() {
-		l, err := net.Listen("tcp", addr)
-		if err != nil {
+		glog.Infof("Starting healthcheck on http://%v%v", addr, DefaultPath)
+		if err := http.ListenAndServe(addr, mux); err != nil {
 			glog.Errorf("Error listening for healthcheck on %v: %v", addr, err)
 			os.Exit(1)
-		}
-		defer l.Close()
-		for {
-			conn, err := l.Accept()
-			if err != nil {
-				glog.Errorf("Error accepting healthcheck connection: %v", err)
-				os.Exit(1)
-			}
-			conn.Close()
 		}
 	}()
 }
 
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(response{
+		Status: "ok",
+		Uptime: time.Since(startTime).Seconds(),
+	})
+}
+
 func Probe(host, port string) bool {
-	addr := host + ":" + port
-	timeout := DefaultTimeout
-	conn, err := net.DialTimeout("tcp", addr, timeout)
+	addr := net.JoinHostPort(host, port)
+	url := "http://" + addr + DefaultPath
+	client := &http.Client{Timeout: DefaultTimeout}
+	resp, err := client.Get(url)
 	if err != nil {
 		return false
 	}
-	conn.Close()
-	return true
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return false
+	}
+	var body response
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		return false
+	}
+	return body.Status == "ok"
 }

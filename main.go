@@ -147,8 +147,8 @@ func main() {
 	proxyProtocolEnabled := flag.Bool("proxy_protocol_enabled", false, "Enable PROXY protocol support. This causes the server to expect PROXY protocol headers on incoming connections.")
 	proxyProtocolReadHeaderTimeout := flag.Int("proxy_protocol_read_header_timeout_ms", 200, "Timeout for reading the PROXY protocol header in milliseconds. If the connection does not send a valid PROXY protocol header in this time, the header is ignored.")
 	healthcheckHost := flag.String("healthcheck_host", health.DefaultHost, "The address for container healthcheck")
-	healthcheckPort := flag.String("healthcheck_port", health.DefaultPort, "TCP port for container healthcheck; accepts connection and closes without logging or updating metrics")
-	healthcheck := flag.Bool("healthcheck", false, "Dial healthcheck_host:healthcheck_port and exit 0 if reachable (for container healthcheck)")
+	healthcheckPort := flag.String("healthcheck_port", health.DefaultPort, "HTTP port for container healthcheck; serves JSON with status and uptime at /health")
+	healthcheck := flag.Bool("healthcheck", false, "GET healthcheck_host:healthcheck_port/health and exit 1 if status is not ok or timeout is exceeded (for container healthcheck)")
 
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %v \n", os.Args[0])
