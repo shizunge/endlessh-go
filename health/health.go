@@ -25,15 +25,17 @@ import (
 )
 
 const (
+	DefaultHost    = "127.0.0.1"
 	DefaultPort    = "51000"
 	DefaultTimeout = 3 * time.Second
 )
 
-func StartListener(port string) {
+func StartListener(host, port string) {
+	addr := host + ":" + port
 	go func() {
-		l, err := net.Listen("tcp", "127.0.0.1:"+port)
+		l, err := net.Listen("tcp", addr)
 		if err != nil {
-			glog.Errorf("Error listening for healthcheck on 127.0.0.1:%v: %v", port, err)
+			glog.Errorf("Error listening for healthcheck on %v: %v", addr, err)
 			os.Exit(1)
 		}
 		defer l.Close()
@@ -48,9 +50,10 @@ func StartListener(port string) {
 	}()
 }
 
-func Probe(port string) bool {
+func Probe(host, port string) bool {
+	addr := host + ":" + port
 	timeout := DefaultTimeout
-	conn, err := net.DialTimeout("tcp", "127.0.0.1:"+port, timeout)
+	conn, err := net.DialTimeout("tcp", addr, timeout)
 	if err != nil {
 		return false
 	}
