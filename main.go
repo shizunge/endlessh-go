@@ -190,6 +190,9 @@ func main() {
 		})
 	clients := startSending(*maxClients, *bannerMaxLength, records)
 
+	// Start the healthcheck listener.
+	health.StartListener(*healthcheckHost, *healthcheckPort)
+
 	interval := time.Duration(*intervalMs) * time.Millisecond
 	// Listen for incoming connections.
 	if *connType == "tcp6" && *connHost == "0.0.0.0" {
@@ -198,7 +201,6 @@ func main() {
 	if len(connPorts) == 0 {
 		connPorts = append(connPorts, defaultPort)
 	}
-	health.StartListener(*healthcheckHost, *healthcheckPort)
 	for _, connPort := range connPorts {
 		startAccepting(*maxClients, *connType, *connHost, connPort, interval, clients, records, *proxyProtocolEnabled, *proxyProtocolReadHeaderTimeout)
 	}
