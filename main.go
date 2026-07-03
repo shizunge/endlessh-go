@@ -190,7 +190,15 @@ func main() {
 		})
 	clients := startSending(*maxClients, *bannerMaxLength, records)
 
-	// Start the healthcheck listener.
+	if *healthcheckPort == "0" || *healthcheckPort == "" {
+		l, err := net.Listen("tcp", *healthcheckHost+":0")
+		if err != nil {
+			glog.Fatalf("Failed to pick a free healthcheck port: %v", err)
+		}
+		actualPort := l.Addr().(*net.TCPAddr).Port
+		*healthcheckPort = strconv.Itoa(actualPort)
+		l.Close()
+	}
 	health.StartListener(*healthcheckHost, *healthcheckPort)
 
 	interval := time.Duration(*intervalMs) * time.Millisecond
