@@ -55,7 +55,7 @@ jobs:
             type=ref,event=branch
             type=edge,branch=main
       - name: Build 
-        uses: docker/build-push-action@v7.2.0
+        uses: docker/build-push-action@v7.3.0
         with:
           platforms: ${{ env.PLATFORMS }}
           push: false
