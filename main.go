@@ -138,6 +138,7 @@ func main() {
 	connHost := flag.String("host", "0.0.0.0", "SSH listening address")
 	flag.Var(&connPorts, "port", fmt.Sprintf("SSH listening port. You may provide multiple -port flags to listen to multiple ports. (default %q)", defaultPort))
 	prometheusEnabled := flag.Bool("enable_prometheus", false, "Enable prometheus")
+	healthcheckEnabled := flag.Bool("enable_healthcheck", false, "Enable healthcheck")
 	prometheusHost := flag.String("prometheus_host", "0.0.0.0", "The address for prometheus")
 	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
 	prometheusEntry := flag.String("prometheus_entry", "metrics", "Entry point for prometheus")
@@ -155,10 +156,6 @@ func main() {
 		flag.PrintDefaults()
 	}
 	flag.Parse()
-
-	if *connType == "tcp6" && *healthcheckHost == "0.0.0.0" {
-		*healthcheckHost = "[::]"
-	}
 
 	if *healthcheck {
 		if !health.Probe(*healthcheckHost, *healthcheckPort) {
@@ -190,16 +187,21 @@ func main() {
 		})
 	clients := startSending(*maxClients, *bannerMaxLength, records)
 
-	if *healthcheckPort == "0" || *healthcheckPort == "" {
-		l, err := net.Listen("tcp", *healthcheckHost+":0")
-		if err != nil {
-			glog.Fatalf("Failed to pick a free healthcheck port: %v", err)
+	if *healthcheckEnabled {
+		if *connType == "tcp6" && *healthcheckHost == "0.0.0.0" {
+			*healthcheckHost = "[::]"
 		}
-		actualPort := l.Addr().(*net.TCPAddr).Port
-		*healthcheckPort = strconv.Itoa(actualPort)
-		l.Close()
+		if *healthcheckPort == "0" || *healthcheckPort == "" {
+			l, err := net.Listen("tcp", *healthcheckHost+":0")
+			if err != nil {
+				glog.Fatalf("Failed to pick a free healthcheck port: %v", err)
+			}
+			actualPort := l.Addr().(*net.TCPAddr).Port
+			*healthcheckPort = strconv.Itoa(actualPort)
+			l.Close()
+		}
+		health.StartListener(*healthcheckHost, *healthcheckPort)
 	}
-	health.StartListener(*healthcheckHost, *healthcheckPort)
 
 	interval := time.Duration(*intervalMs) * time.Millisecond
 	// Listen for incoming connections.

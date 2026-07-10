@@ -19,4 +19,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD ["/endlessh", "-healthcheck"]
 USER nobody
 ENTRYPOINT  ["/endlessh"]
-CMD ["-logtostderr", "-v=1"]
+CMD ["-logtostderr", "-v=1", "-enable_healthcheck"]
