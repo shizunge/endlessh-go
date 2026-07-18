@@ -58,6 +58,12 @@ Usage of ./endlessh-go
         Enable prometheus
   -geoip_supplier string
         Supplier to obtain Geohash of IPs. Possible values are "off", "ip-api", "max-mind-db" (default "off")
+  -healthcheck
+        GET healthcheck_host:healthcheck_port/health and exit 1 if status is not ok or timeout is exceeded (for container healthcheck)
+  -healthcheck_host string
+        The address for container healthcheck (default "127.0.0.1")
+  -healthcheck_port string
+        HTTP port for container healthcheck; serves JSON with status and uptime at /health (default "51000")
   -host string
         SSH listening address (default "0.0.0.0")
   -interval_ms int
@@ -120,6 +126,23 @@ It listens to port `2112` and entry point is `/metrics` by default. The port and
 The endlessh-go server stores the geohash of attackers as a label on `endlessh_client_open_count`, which is also off by default. You can turn it on via the CLI argument `-geoip_supplier`. The endlessh-go uses service from [ip-api](https://ip-api.com/), which may enforce a query rate and limit commercial use. Visit their website for their terms and policies.
 
 You could also use an offline GeoIP database from [MaxMind](https://www.maxmind.com) by setting `-geoip_supplier` to _max-mind-db_ and `-max_mind_db` to the path of the database file.
+
+## Healthcheck
+
+The endlessh-go server exposes an HTTP health endpoint while the server is running. By default it listens on `127.0.0.1:51000` at `/health` and returns a JSON like this:
+
+```json
+{
+      "status": "ok",
+      "uptime": 123.456789012
+}
+```
+
+`status` is always "ok".
+
+`uptime` is the number of seconds since the server started. The host and port can be changed via `-healthcheck_host` and `-healthcheck_port`.
+
+The [docker image](https://hub.docker.com/r/shizunge/endlessh-go) includes a built-in `HEALTHCHECK` that runs every 30 seconds.
 
 ## Dashboard
 

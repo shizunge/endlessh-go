@@ -19,6 +19,7 @@ package main
 import (
 	"endlessh-go/client"
 	"endlessh-go/geoip"
+	"endlessh-go/health"
 	"endlessh-go/metrics"
 	"flag"
 	"fmt"
@@ -137,6 +138,7 @@ func main() {
 	connHost := flag.String("host", "0.0.0.0", "SSH listening address")
 	flag.Var(&connPorts, "port", fmt.Sprintf("SSH listening port. You may provide multiple -port flags to listen to multiple ports. (default %q)", defaultPort))
 	prometheusEnabled := flag.Bool("enable_prometheus", false, "Enable prometheus")
+	healthcheckEnabled := flag.Bool("enable_healthcheck", false, "Enable healthcheck")
 	prometheusHost := flag.String("prometheus_host", "0.0.0.0", "The address for prometheus")
 	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
 	prometheusEntry := flag.String("prometheus_entry", "metrics", "Entry point for prometheus")
@@ -145,12 +147,22 @@ func main() {
 	maxMindDbFileName := flag.String("max_mind_db", "", "Path to the MaxMind DB file.")
 	proxyProtocolEnabled := flag.Bool("proxy_protocol_enabled", false, "Enable PROXY protocol support. This causes the server to expect PROXY protocol headers on incoming connections.")
 	proxyProtocolReadHeaderTimeout := flag.Int("proxy_protocol_read_header_timeout_ms", 200, "Timeout for reading the PROXY protocol header in milliseconds. If the connection does not send a valid PROXY protocol header in this time, the header is ignored.")
+	healthcheckHost := flag.String("healthcheck_host", health.DefaultHost, "The address for container healthcheck")
+	healthcheckPort := flag.String("healthcheck_port", health.DefaultPort, "HTTP port for container healthcheck; serves JSON with status and uptime at /health")
+	healthcheck := flag.Bool("healthcheck", false, "GET healthcheck_host:healthcheck_port/health and exit 1 if status is not ok or timeout is exceeded (for container healthcheck)")
 
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %v \n", os.Args[0])
 		flag.PrintDefaults()
 	}
 	flag.Parse()
+
+	if *healthcheck {
+		if !health.Probe(*healthcheckHost, *healthcheckPort) {
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
 
 	if *prometheusEnabled {
 		if *connType == "tcp6" && *prometheusHost == "0.0.0.0" {
@@ -174,6 +186,22 @@ func main() {
 			MaxMindDbFileName: *maxMindDbFileName,
 		})
 	clients := startSending(*maxClients, *bannerMaxLength, records)
+
+	if *healthcheckEnabled {
+		if *connType == "tcp6" && *healthcheckHost == "0.0.0.0" {
+			*healthcheckHost = "[::]"
+		}
+		if *healthcheckPort == "0" || *healthcheckPort == "" {
+			l, err := net.Listen("tcp", *healthcheckHost+":0")
+			if err != nil {
+				glog.Fatalf("Failed to pick a free healthcheck port: %v", err)
+			}
+			actualPort := l.Addr().(*net.TCPAddr).Port
+			*healthcheckPort = strconv.Itoa(actualPort)
+			l.Close()
+		}
+		health.StartListener(*healthcheckHost, *healthcheckPort)
+	}
 
 	interval := time.Duration(*intervalMs) * time.Millisecond
 	// Listen for incoming connections.
