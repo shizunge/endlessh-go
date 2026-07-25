@@ -144,7 +144,8 @@ func main() {
 	proxyProtocolReadHeaderTimeout := flag.Int("proxy_protocol_read_header_timeout_ms", 200, "Timeout for reading the PROXY protocol header in milliseconds. If the connection does not send a valid PROXY protocol header in this time, the header is ignored.")
 
 	// Prometheus metrics flags
-	prometheusEnabled := flag.Bool("enable_prometheus", false, "Enable prometheus")
+	prometheusEnabledOld := flag.Bool("enable_prometheus", false, "Enable prometheus (deprecated, use prometheus_enable)")
+	prometheusEnabledNew := flag.Bool("prometheus_enable", false, "Enable prometheus")
 	prometheusHost := flag.String("prometheus_host", "0.0.0.0", "The address for prometheus")
 	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
 	prometheusEntry := flag.String("prometheus_entry", "metrics", "Entry point for prometheus")
@@ -173,7 +174,18 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *prometheusEnabled {
+	prometheusEnabled := *prometheusEnabledNew
+	prometheusEnableSet := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "prometheus_enable" {
+			prometheusEnableSet = true
+		}
+	})
+	if !prometheusEnableSet {
+		prometheusEnabled = *prometheusEnabledOld
+	}
+
+	if prometheusEnabled {
 		if *connType == "tcp6" && *prometheusHost == "0.0.0.0" {
 			*prometheusHost = "[::]"
 		}
@@ -189,7 +201,7 @@ func main() {
 		metrics.InitPrometheus(*prometheusHost, *prometheusPort, *prometheusEntry)
 	}
 
-	records := metrics.StartRecording(*maxClients, *prometheusEnabled, *prometheusCleanUnseenSeconds,
+	records := metrics.StartRecording(*maxClients, prometheusEnabled, *prometheusCleanUnseenSeconds,
 		geoip.GeoOption{
 			GeoipSupplier:     *geoipSupplier,
 			MaxMindDbFileName: *maxMindDbFileName,
