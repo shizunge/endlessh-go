@@ -59,11 +59,13 @@ Usage of ./endlessh-go
   -geoip_supplier string
         Supplier to obtain Geohash of IPs. Possible values are "off", "ip-api", "max-mind-db" (default "off")
   -healthcheck
-        GET healthcheck_host:healthcheck_port/health and exit 1 if status is not ok or timeout is exceeded (for container healthcheck)
+        Perform healthcheck and exit. GET healthcheck_host:healthcheck_port/health and exit 1 if status is not ok or timeout is exceeded.
+  -healthcheck_enable
+        Enable healthcheck
   -healthcheck_host string
-        The address for container healthcheck (default "127.0.0.1")
+        The address for healthcheck. (default "127.0.0.1")
   -healthcheck_port string
-        HTTP port for container healthcheck; serves JSON with status and uptime at /health (default "51000")
+        HTTP port for healthcheck; Serves JSON with status and uptime at /health. (default "51000")
   -host string
         SSH listening address (default "0.0.0.0")
   -interval_ms int
@@ -129,7 +131,7 @@ You could also use an offline GeoIP database from [MaxMind](https://www.maxmind.
 
 ## Healthcheck
 
-The endlessh-go server exposes an HTTP health endpoint while the server is running. By default it listens on `127.0.0.1:51000` at `/health` and returns a JSON like this:
+The endlessh-go server exposes an HTTP health endpoint when the `-healthcheck_enable` flag is set. By default it listens on `127.0.0.1:51000` at `/health` and returns a JSON like this:
 
 ```json
 {

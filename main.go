@@ -131,25 +131,34 @@ const defaultPort = "2222"
 var connPorts arrayStrings
 
 func main() {
+	// Core SSH server flags
+	connHost := flag.String("host", "0.0.0.0", "SSH listening address")
+	flag.Var(&connPorts, "port", fmt.Sprintf("SSH listening port. You may provide multiple -port flags to listen to multiple ports. (default %q)", defaultPort))
+	connType := flag.String("conn_type", "tcp", "Connection type. Possible values are tcp, tcp4, tcp6")
 	intervalMs := flag.Int("interval_ms", 1000, "Message millisecond delay")
 	bannerMaxLength := flag.Int64("line_length", 32, "Maximum banner line length")
 	maxClients := flag.Int64("max_clients", 4096, "Maximum number of clients")
-	connType := flag.String("conn_type", "tcp", "Connection type. Possible values are tcp, tcp4, tcp6")
-	connHost := flag.String("host", "0.0.0.0", "SSH listening address")
-	flag.Var(&connPorts, "port", fmt.Sprintf("SSH listening port. You may provide multiple -port flags to listen to multiple ports. (default %q)", defaultPort))
+
+	// PROXY protocol flags
+	proxyProtocolEnabled := flag.Bool("proxy_protocol_enabled", false, "Enable PROXY protocol support. This causes the server to expect PROXY protocol headers on incoming connections.")
+	proxyProtocolReadHeaderTimeout := flag.Int("proxy_protocol_read_header_timeout_ms", 200, "Timeout for reading the PROXY protocol header in milliseconds. If the connection does not send a valid PROXY protocol header in this time, the header is ignored.")
+
+	// Prometheus metrics flags
 	prometheusEnabled := flag.Bool("enable_prometheus", false, "Enable prometheus")
-	healthcheckEnabled := flag.Bool("enable_healthcheck", false, "Enable healthcheck")
 	prometheusHost := flag.String("prometheus_host", "0.0.0.0", "The address for prometheus")
 	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
 	prometheusEntry := flag.String("prometheus_entry", "metrics", "Entry point for prometheus")
 	prometheusCleanUnseenSeconds := flag.Int("prometheus_clean_unseen_seconds", 0, "Remove series if the IP is not seen for the given time. Set to 0 to disable. (default 0)")
+
+	// GeoIP flags
 	geoipSupplier := flag.String("geoip_supplier", "off", "Supplier to obtain Geohash of IPs. Possible values are \"off\", \"ip-api\", \"max-mind-db\"")
 	maxMindDbFileName := flag.String("max_mind_db", "", "Path to the MaxMind DB file.")
-	proxyProtocolEnabled := flag.Bool("proxy_protocol_enabled", false, "Enable PROXY protocol support. This causes the server to expect PROXY protocol headers on incoming connections.")
-	proxyProtocolReadHeaderTimeout := flag.Int("proxy_protocol_read_header_timeout_ms", 200, "Timeout for reading the PROXY protocol header in milliseconds. If the connection does not send a valid PROXY protocol header in this time, the header is ignored.")
-	healthcheckHost := flag.String("healthcheck_host", health.DefaultHost, "The address for container healthcheck")
-	healthcheckPort := flag.String("healthcheck_port", health.DefaultPort, "HTTP port for container healthcheck; serves JSON with status and uptime at /health")
-	healthcheck := flag.Bool("healthcheck", false, "GET healthcheck_host:healthcheck_port/health and exit 1 if status is not ok or timeout is exceeded (for container healthcheck)")
+
+	// Healthcheck flags
+	healthcheckEnabled := flag.Bool("healthcheck_enable", false, "Enable healthcheck")
+	healthcheckHost := flag.String("healthcheck_host", health.DefaultHost, "The address for healthcheck.")
+	healthcheckPort := flag.String("healthcheck_port", health.DefaultPort, "HTTP port for healthcheck; Serves JSON with status and uptime at /health.")
+	healthcheck := flag.Bool("healthcheck", false, "Perform healthcheck and exit. GET healthcheck_host:healthcheck_port/health and exit 1 if status is not ok or timeout is exceeded.")
 
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %v \n", os.Args[0])
