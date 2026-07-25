@@ -21,21 +21,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
-
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
           go-version: '1.26.1'
           cache: true
-
       - name: Install dependencies
         run: go mod download
-
       - name: Run Tests
         run: go test -v ./...
   build_and_push:
     name: Build and push Docker image
     runs-on: ubuntu-latest
+    needs: test
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout code
