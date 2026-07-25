@@ -263,7 +263,7 @@ func TestEndlesshIntegration_PrometheusMetrics(t *testing.T) {
 	cmd := exec.Command(
 		"go", "run", "main.go",
 		"-port=0",
-		"-enable_prometheus",
+		"-prometheus_enable",
 		"-prometheus_port=0",
 		"-interval_ms=100",
 		"-logtostderr", "-v=1",
@@ -320,5 +320,63 @@ func TestEndlesshIntegration_PrometheusMetrics(t *testing.T) {
 
 	if !strings.Contains(body, "endlessh_sent_bytes_total") {
 		t.Errorf("Expected bytes metric not found:\n%s", body)
+	}
+}
+
+func TestEndlesshIntegration_Healthcheck(t *testing.T) {
+	var stderr bytes.Buffer
+
+	cmd := exec.Command(
+		"go", "run", "main.go",
+		"-port=0",
+		"-healthcheck_enable",
+		"-healthcheck_port=0",
+		"-interval_ms=100",
+		"-logtostderr", "-v=1",
+	)
+	cmd.Stderr = &stderr
+
+	if err := cmd.Start(); err != nil {
+		t.Fatalf("Failed to start server: %v", err)
+	}
+	defer cmd.Process.Kill()
+
+	if !waitForLogMatch(&stderr, "Starting healthcheck on http", waitForListenTimeout) {
+		t.Fatalf("Healthcheck listener did not start: %s", stderr.String())
+	}
+
+	reHealth := regexp.MustCompile(`Starting healthcheck on http://.*:(\d+)/health`)
+	healthMatch := reHealth.FindStringSubmatch(stderr.String())
+	if len(healthMatch) < 2 {
+		t.Fatalf("Could not parse healthcheck port: %s", stderr.String())
+	}
+	healthPort := healthMatch[1]
+
+	// 1. Verify healthcheck HTTP endpoint returns valid JSON
+	resp, err := net.Dial("tcp", "localhost:"+healthPort)
+	if err != nil {
+		t.Fatalf("Failed to connect to healthcheck endpoint: %v", err)
+	}
+	fmt.Fprintf(resp, "GET /health HTTP/1.1\r\nHost: localhost\r\n\r\n")
+
+	buf := make([]byte, 8192)
+	n, _ := resp.Read(buf)
+	body := string(buf[:n])
+	resp.Close()
+
+	if !strings.Contains(body, `"status":"ok"`) {
+		t.Errorf("Expected status:ok in health response: %s", body)
+	}
+
+	// 2. Run the probe mode (-healthcheck) and verify it exits with 0
+	probeCmd := exec.Command(
+		"go", "run", "main.go",
+		"-healthcheck",
+		"-healthcheck_port="+healthPort,
+	)
+	var probeStderr bytes.Buffer
+	probeCmd.Stderr = &probeStderr
+	if err := probeCmd.Run(); err != nil {
+		t.Errorf("Healthcheck probe failed: %v, stderr: %s", err, probeStderr.String())
 	}
 }

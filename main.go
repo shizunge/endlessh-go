@@ -167,12 +167,7 @@ func main() {
 	}
 	flag.Parse()
 
-	if *healthcheck {
-		if !health.Probe(*healthcheckHost, *healthcheckPort) {
-			os.Exit(1)
-		}
-		os.Exit(0)
-	}
+	health.SetupHealthcheck(*healthcheck, *healthcheckEnabled, *connType, healthcheckHost, healthcheckPort)
 
 	prometheusEnabled := *prometheusEnabledNew
 	prometheusEnableSet := false
@@ -208,21 +203,6 @@ func main() {
 		})
 	clients := startSending(*maxClients, *bannerMaxLength, records)
 
-	if *healthcheckEnabled {
-		if *connType == "tcp6" && *healthcheckHost == "0.0.0.0" {
-			*healthcheckHost = "[::]"
-		}
-		if *healthcheckPort == "0" || *healthcheckPort == "" {
-			l, err := net.Listen("tcp", *healthcheckHost+":0")
-			if err != nil {
-				glog.Fatalf("Failed to pick a free healthcheck port: %v", err)
-			}
-			actualPort := l.Addr().(*net.TCPAddr).Port
-			*healthcheckPort = strconv.Itoa(actualPort)
-			l.Close()
-		}
-		health.StartListener(*healthcheckHost, *healthcheckPort)
-	}
 
 	interval := time.Duration(*intervalMs) * time.Millisecond
 	// Listen for incoming connections.
