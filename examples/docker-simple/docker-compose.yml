@@ -8,7 +8,7 @@ services:
       - -interval_ms=1000
       - -logtostderr
       - -v=1
-      - -enable_prometheus
+      - -prometheus_enabled
       - -geoip_supplier=ip-api
     networks:
       - example_network

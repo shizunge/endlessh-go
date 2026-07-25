@@ -21,6 +21,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/golang/glog"
@@ -83,4 +84,30 @@ func Probe(host, port string) bool {
 		return false
 	}
 	return body.Status == "ok"
+}
+
+// SetupHealthcheck probes or starts the healthcheck listener as configured.
+func SetupHealthcheck(healthcheck bool, healthcheckEnabled bool, connType string, healthcheckHost, healthcheckPort *string) {
+	if healthcheck {
+		if !Probe(*healthcheckHost, *healthcheckPort) {
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
+	if healthcheckEnabled {
+		if connType == "tcp6" && *healthcheckHost == "0.0.0.0" {
+			*healthcheckHost = "[::]"
+		}
+		if *healthcheckPort == "0" || *healthcheckPort == "" {
+			l, err := net.Listen("tcp", *healthcheckHost+":0")
+			if err != nil {
+				glog.Fatalf("Failed to pick a free healthcheck port: %v", err)
+			}
+			actualPort := l.Addr().(*net.TCPAddr).Port
+			*healthcheckPort = strconv.Itoa(actualPort)
+			l.Close()
+		}
+		StartListener(*healthcheckHost, *healthcheckPort)
+	}
 }
