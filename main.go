@@ -144,8 +144,8 @@ func main() {
 	proxyProtocolReadHeaderTimeout := flag.Int("proxy_protocol_read_header_timeout_ms", 200, "Timeout for reading the PROXY protocol header in milliseconds. If the connection does not send a valid PROXY protocol header in this time, the header is ignored.")
 
 	// Prometheus metrics flags
-	prometheusEnabledOld := flag.Bool("enable_prometheus", false, "Enable prometheus (deprecated, use prometheus_enable)")
-	prometheusEnabledNew := flag.Bool("prometheus_enable", false, "Enable prometheus")
+	prometheusEnabledOld := flag.Bool("enable_prometheus", false, "Enable prometheus (deprecated, use prometheus_enabled)")
+	prometheusEnabledNew := flag.Bool("prometheus_enabled", false, "Enable prometheus")
 	prometheusHost := flag.String("prometheus_host", "0.0.0.0", "The address for prometheus")
 	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
 	prometheusEntry := flag.String("prometheus_entry", "metrics", "Entry point for prometheus")
@@ -156,7 +156,7 @@ func main() {
 	maxMindDbFileName := flag.String("max_mind_db", "", "Path to the MaxMind DB file.")
 
 	// Healthcheck flags
-	healthcheckEnabled := flag.Bool("healthcheck_enable", false, "Enable healthcheck")
+	healthcheckEnabled := flag.Bool("healthcheck_enabled", false, "Enable healthcheck")
 	healthcheckHost := flag.String("healthcheck_host", health.DefaultHost, "The address for healthcheck.")
 	healthcheckPort := flag.String("healthcheck_port", health.DefaultPort, "HTTP port for healthcheck; Serves JSON with status and uptime at /health.")
 	healthcheck := flag.Bool("healthcheck", false, "Perform healthcheck and exit. GET healthcheck_host:healthcheck_port/health and exit 1 if status is not ok or timeout is exceeded.")
@@ -172,7 +172,7 @@ func main() {
 	prometheusEnabled := *prometheusEnabledNew
 	prometheusEnableSet := false
 	flag.Visit(func(f *flag.Flag) {
-		if f.Name == "prometheus_enable" {
+		if f.Name == "prometheus_enabled" {
 			prometheusEnableSet = true
 		}
 	})

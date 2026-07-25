@@ -263,7 +263,7 @@ func TestEndlesshIntegration_PrometheusMetrics(t *testing.T) {
 	cmd := exec.Command(
 		"go", "run", "main.go",
 		"-port=0",
-		"-prometheus_enable",
+		"-prometheus_enabled",
 		"-prometheus_port=0",
 		"-interval_ms=100",
 		"-logtostderr", "-v=1",
@@ -329,7 +329,7 @@ func TestEndlesshIntegration_Healthcheck(t *testing.T) {
 	cmd := exec.Command(
 		"go", "run", "main.go",
 		"-port=0",
-		"-healthcheck_enable",
+		"-healthcheck_enabled",
 		"-healthcheck_port=0",
 		"-interval_ms=100",
 		"-logtostderr", "-v=1",

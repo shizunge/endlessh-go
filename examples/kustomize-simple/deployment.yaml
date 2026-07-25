@@ -14,7 +14,7 @@ spec:
             - -interval_ms=1000
             - -logtostderr
             - -v=1
-            - -prometheus_enable
+            - -prometheus_enabled
             - -geoip_supplier=ip-api
             - -host=[::]
             - -prometheus_host=[::]

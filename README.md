@@ -55,12 +55,12 @@ Usage of ./endlessh-go
   -conn_type string
         Connection type. Possible values are tcp, tcp4, tcp6 (default "tcp")
   -enable_prometheus
-        Enable prometheus (deprecated, use prometheus_enable)
+        Enable prometheus (deprecated, use prometheus_enabled)
   -geoip_supplier string
         Supplier to obtain Geohash of IPs. Possible values are "off", "ip-api", "max-mind-db" (default "off")
   -healthcheck
         Perform healthcheck and exit. GET healthcheck_host:healthcheck_port/health and exit 1 if status is not ok or timeout is exceeded.
-  -healthcheck_enable
+  -healthcheck_enabled
         Enable healthcheck
   -healthcheck_host string
         The address for healthcheck. (default "127.0.0.1")
@@ -90,7 +90,7 @@ Usage of ./endlessh-go
         SSH listening port. You may provide multiple -port flags to listen to multiple ports. (default "2222")
   -prometheus_clean_unseen_seconds int
         Remove series if the IP is not seen for the given time. Set to 0 to disable. (default 0)
-  -prometheus_enable
+  -prometheus_enabled
         Enable prometheus
   -prometheus_entry string
         Entry point for prometheus (default "metrics")
@@ -123,7 +123,7 @@ Endlessh-go exports the following Prometheus metrics.
 | endlessh_client_open_count           | count | Number of connections of clients. <br> Labels: <br> <ul><li> `ip`: Remote IP of the client </li> <li> `local_port`: Local port the program listens to </li> <li> `country`: Country of the IP </li> <li> `location`: Country, Region, and City </li> <li> `geohash`: Geohash of the location </li></ul> |
 | endlessh_client_trapped_time_seconds | count | Seconds a client spends on endlessh. <br> Labels: <br> <ul><li> `ip`: Remote IP of the client </li> <li> `local_port`: Local port the program listens to </li></ul> |
 
-The metrics is off by default, you can turn it via the CLI argument `-prometheus_enable`.
+The metrics is off by default, you can turn it via the CLI argument `-prometheus_enabled`.
 
 It listens to port `2112` and entry point is `/metrics` by default. The port and entry point can be changed via CLI arguments.
 
@@ -133,7 +133,7 @@ You could also use an offline GeoIP database from [MaxMind](https://www.maxmind.
 
 ## Healthcheck
 
-The endlessh-go server exposes an HTTP health endpoint when the `-healthcheck_enable` flag is set. By default it listens on `127.0.0.1:51000` at `/health` and returns a JSON like this:
+The endlessh-go server exposes an HTTP health endpoint when the `-healthcheck_enabled` flag is set. By default it listens on `127.0.0.1:51000` at `/health` and returns a JSON like this:
 
 ```json
 {
