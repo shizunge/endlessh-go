@@ -17,20 +17,21 @@
 package main
 
 import (
+	"context"
+	"endlessh-go/app"
 	"endlessh-go/client"
 	"endlessh-go/geoip"
 	"endlessh-go/health"
 	"endlessh-go/metrics"
-	"flag"
 	"fmt"
 	"net"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/golang/glog"
 	proxyproto "github.com/pires/go-proxyproto"
+	"github.com/urfave/cli/v3"
 )
 
 func startSending(maxClients int64, bannerMaxLength int64, records chan<- metrics.RecordEntry) chan *client.Client {
@@ -70,15 +71,9 @@ func startSending(maxClients int64, bannerMaxLength int64, records chan<- metric
 	return clients
 }
 
-func startAccepting(maxClients int64, connType, connHost, connPort string, interval time.Duration, clients chan<- *client.Client, records chan<- metrics.RecordEntry, proxyProtocolEnabled bool, proxyProtocolReadHeaderTimeout int) {
+func startAccepting(maxClients int64, connType, connHost string, connPort uint16, interval time.Duration, clients chan<- *client.Client, records chan<- metrics.RecordEntry, proxyProtocolEnabled bool, proxyProtocolReadHeaderTimeout time.Duration) {
 	go func() {
-		connPortInt, err := strconv.Atoi(connPort)
-		if err != nil {
-			glog.Errorf("Invalid port: %v", err)
-			os.Exit(1)
-		}
-
-		addr := connHost + fmt.Sprintf(":%d", connPortInt)
+		addr := fmt.Sprintf("%s:%d", connHost, connPort)
 		l, err := net.Listen(connType, addr)
 		if err != nil {
 			glog.Errorf("Error listening: %v", err)
@@ -87,7 +82,7 @@ func startAccepting(maxClients int64, connType, connHost, connPort string, inter
 
 		// Wrap the listener in a proxy protocol listener
 		if proxyProtocolEnabled {
-			l = &proxyproto.Listener{Listener: l, ReadHeaderTimeout: time.Duration(proxyProtocolReadHeaderTimeout) * time.Millisecond}
+			l = &proxyproto.Listener{Listener: l, ReadHeaderTimeout: proxyProtocolReadHeaderTimeout}
 		}
 
 		// Close the listener when the application closes.
@@ -115,114 +110,107 @@ func startAccepting(maxClients int64, connType, connHost, connPort string, inter
 	}()
 }
 
-type arrayStrings []string
-
-func (a *arrayStrings) String() string {
-	return strings.Join(*a, ", ")
-}
-
-func (a *arrayStrings) Set(value string) error {
-	*a = append(*a, value)
-	return nil
-}
-
-const defaultPort = "2222"
-
-var connPorts arrayStrings
-
-func main() {
+func action(ctx context.Context, cmd *cli.Command) error {
 	// Core SSH server flags
-	connHost := flag.String("host", "0.0.0.0", "SSH listening address")
-	flag.Var(&connPorts, "port", fmt.Sprintf("SSH listening port. You may provide multiple -port flags to listen to multiple ports. (default %q)", defaultPort))
-	connType := flag.String("conn_type", "tcp", "Connection type. Possible values are tcp, tcp4, tcp6")
-	intervalMs := flag.Int("interval_ms", 1000, "Message millisecond delay")
-	bannerMaxLength := flag.Int64("line_length", 32, "Maximum banner line length")
-	maxClients := flag.Int64("max_clients", 4096, "Maximum number of clients")
+	connHost := cmd.String(app.FlagHostAddr)
+	connPorts := cmd.Uint16Slice(app.FlagHostPort)
+	connType := cmd.String(app.FlagConnType)
+	interval := app.CurrentOrDeprecated(cmd,
+		cmd.Duration(app.FlagMsgDelay),
+		app.FlagMsgDelayLegacy,
+		func(c *cli.Command, k string) time.Duration {
+			return time.Duration(cmd.Int(k)) * time.Millisecond
+		})
+	bannerMaxLength := cmd.Int64(app.FlagLineLength)
+	maxClients := cmd.Int64(app.FlagMaxClients)
 
 	// PROXY protocol flags
-	proxyProtocolEnabled := flag.Bool("proxy_protocol_enabled", false, "Enable PROXY protocol support. This causes the server to expect PROXY protocol headers on incoming connections.")
-	proxyProtocolReadHeaderTimeout := flag.Int("proxy_protocol_read_header_timeout_ms", 200, "Timeout for reading the PROXY protocol header in milliseconds. If the connection does not send a valid PROXY protocol header in this time, the header is ignored.")
+	proxyProtocolEnabled := cmd.Bool(app.FlagProxyEnable)
+	proxyProtocolReadHeaderTimeout := app.CurrentOrDeprecated(cmd,
+		cmd.Duration(app.FlagProxyTimeout),
+		app.FlagProxyTimeoutLegacy,
+		func(c *cli.Command, k string) time.Duration {
+			return time.Duration(cmd.Int(k)) * time.Millisecond
+		})
 
 	// Prometheus metrics flags
-	prometheusEnabledOld := flag.Bool("enable_prometheus", false, "Enable prometheus (deprecated, use prometheus_enabled)")
-	prometheusEnabledNew := flag.Bool("prometheus_enabled", false, "Enable prometheus")
-	prometheusHost := flag.String("prometheus_host", "0.0.0.0", "The address for prometheus")
-	prometheusPort := flag.String("prometheus_port", "2112", "The port for prometheus")
-	prometheusEntry := flag.String("prometheus_entry", "metrics", "Entry point for prometheus")
-	prometheusCleanUnseenSeconds := flag.Int("prometheus_clean_unseen_seconds", 0, "Remove series if the IP is not seen for the given time. Set to 0 to disable. (default 0)")
+	prometheusEnabled := app.CurrentOrDeprecated(cmd,
+		cmd.Bool(app.FlagPrometheusEnable),
+		app.FlagPrometheusEnableLegacy,
+		(*cli.Command).Bool)
+	prometheusHost := cmd.String(app.FlagPrometheusHost)
+	prometheusPort := cmd.Uint16(app.FlagPrometheusPort)
+	prometheusEntry := cmd.String(app.FlagPrometheusEntry)
+	prometheusCleanUnseenDelay := app.CurrentOrDeprecated(cmd,
+		cmd.Duration(app.FlagPrometheusCleanDelay),
+		app.FlagPrometheusCleanDelayLegacy,
+		func(c *cli.Command, k string) time.Duration {
+			return time.Duration(cmd.Int(k)) * time.Second
+		})
 
 	// GeoIP flags
-	geoipSupplier := flag.String("geoip_supplier", "off", "Supplier to obtain Geohash of IPs. Possible values are \"off\", \"ip-api\", \"max-mind-db\"")
-	maxMindDbFileName := flag.String("max_mind_db", "", "Path to the MaxMind DB file.")
+	geoipSupplier := cmd.String(app.FlagGeoIPSupplier)
+	maxMindDbFileName := cmd.String(app.FlagGeoIPMaxMind)
 
 	// Healthcheck flags
-	healthcheckEnabled := flag.Bool("healthcheck_enabled", false, "Enable healthcheck")
-	healthcheckHost := flag.String("healthcheck_host", health.DefaultHost, "The address for healthcheck.")
-	healthcheckPort := flag.String("healthcheck_port", health.DefaultPort, "HTTP port for healthcheck; Serves JSON with status and uptime at /health.")
-	healthcheck := flag.Bool("healthcheck", false, "Perform healthcheck and exit. GET healthcheck_host:healthcheck_port/health and exit 1 if status is not ok or timeout is exceeded.")
+	healthcheckEnabled := cmd.Bool(app.FlagHealthCheckEnable)
+	healthcheckHost := cmd.String(app.FlagHealthCheckHost)
+	healthcheckPort := cmd.Uint16(app.FlagHealthCheckPort)
+	healthcheck := cmd.Bool(app.FlagHealthCheckOneShot)
 
-	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %v \n", os.Args[0])
-		flag.PrintDefaults()
-	}
-	flag.Parse()
-
-	health.SetupHealthcheck(*healthcheck, *healthcheckEnabled, *connType, healthcheckHost, healthcheckPort)
-
-	prometheusEnabled := *prometheusEnabledNew
-	prometheusEnableSet := false
-	flag.Visit(func(f *flag.Flag) {
-		if f.Name == "prometheus_enabled" {
-			prometheusEnableSet = true
-		}
-	})
-	if !prometheusEnableSet {
-		prometheusEnabled = *prometheusEnabledOld
-	}
+	health.SetupHealthcheck(healthcheck, healthcheckEnabled, connType, healthcheckHost, healthcheckPort)
 
 	if prometheusEnabled {
-		if *connType == "tcp6" && *prometheusHost == "0.0.0.0" {
-			*prometheusHost = "[::]"
+		if connType == "tcp6" && prometheusHost == "0.0.0.0" {
+			prometheusHost = "[::]"
 		}
-		if *prometheusPort == "0" || *prometheusPort == "" {
-			l, err := net.Listen("tcp", *prometheusHost+":0")
+		if prometheusPort == 0 {
+			l, err := net.Listen("tcp", prometheusHost+":0")
 			if err != nil {
 				glog.Fatalf("Failed to pick a free Prometheus port: %v", err)
 			}
 			actualPort := l.Addr().(*net.TCPAddr).Port
-			*prometheusPort = strconv.Itoa(actualPort)
+			prometheusPort = uint16(actualPort)
 			l.Close()
 		}
-		metrics.InitPrometheus(*prometheusHost, *prometheusPort, *prometheusEntry)
+		metrics.InitPrometheus(prometheusHost, prometheusPort, prometheusEntry)
 	}
 
-	records := metrics.StartRecording(*maxClients, prometheusEnabled, *prometheusCleanUnseenSeconds,
+	records := metrics.StartRecording(maxClients, prometheusEnabled, prometheusCleanUnseenDelay,
 		geoip.GeoOption{
-			GeoipSupplier:     *geoipSupplier,
-			MaxMindDbFileName: *maxMindDbFileName,
+			GeoipSupplier:     geoipSupplier,
+			MaxMindDbFileName: maxMindDbFileName,
 		})
-	clients := startSending(*maxClients, *bannerMaxLength, records)
+	clients := startSending(maxClients, bannerMaxLength, records)
 
-
-	interval := time.Duration(*intervalMs) * time.Millisecond
 	// Listen for incoming connections.
-	if *connType == "tcp6" && *connHost == "0.0.0.0" {
-		*connHost = "[::]"
-	}
-	if len(connPorts) == 0 {
-		connPorts = append(connPorts, defaultPort)
+	if connType == "tcp6" && connHost == "0.0.0.0" {
+		connHost = "[::]"
 	}
 	for _, connPort := range connPorts {
-		startAccepting(*maxClients, *connType, *connHost, connPort, interval, clients, records, *proxyProtocolEnabled, *proxyProtocolReadHeaderTimeout)
+		startAccepting(maxClients, connType, connHost, connPort, interval, clients, records, proxyProtocolEnabled, proxyProtocolReadHeaderTimeout)
 	}
 	for {
-		if *prometheusCleanUnseenSeconds <= 0 {
+		if prometheusCleanUnseenDelay <= 0 {
 			time.Sleep(time.Duration(1<<63 - 1))
 		} else {
-			time.Sleep(time.Second * time.Duration(60))
+			time.Sleep(60 * time.Second)
 			records <- metrics.RecordEntry{
 				RecordType: metrics.RecordEntryTypeClean,
 			}
 		}
+	}
+}
+
+func main() {
+	cmd := app.Command(action)
+	// urfave/cli reports usage errors and ExitCoder errors (such as the flag
+	// validators in package app) on its own, exiting for the latter. Any other
+	// error, for example a bad value from the configuration file or an
+	// environment variable, reaches this point and is printed here; otherwise
+	// it would be swallowed.
+	if err := cmd.Run(context.Background(), os.Args); err != nil {
+		fmt.Fprintln(cmd.ErrWriter, err)
+		os.Exit(1)
 	}
 }

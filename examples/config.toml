@@ -1,0 +1,39 @@
+# Example configuration for endlessh-go
+#
+# Either copy this to `~/.config/endlessh-go` or use the `--config` argument
+
+[general]
+host = "0.0.0.0"
+port = [2222]
+conn_type = "tcp"
+interval = "1s"
+line_length = 32
+max_clients = 4096
+
+[proxy]
+protocol_enabled = false
+protocol_read_header_timeout = "200ms"
+
+[prometheus]
+enabled = false
+host = "0.0.0.0"
+port = 2112
+entry = "metrics"
+clean_unseen = "0s"
+
+[geoip]
+supplier = "off"
+max_mind_db = ""
+
+[healthcheck]
+enabled = false
+host = "127.0.0.1"
+port = 51000
+
+[logging]
+verbosity = 0
+log_to_stderr = false
+also_log_to_stderr = false
+stderr_threshold = "ERROR"
+log_dir = ""
+log_link = ""

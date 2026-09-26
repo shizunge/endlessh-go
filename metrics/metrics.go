@@ -18,11 +18,12 @@ package metrics
 
 import (
 	"endlessh-go/geoip"
+	"net"
 	"net/http"
 	"os"
-	"time"
+	"strconv"
 	"strings"
-	"net"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
@@ -39,7 +40,7 @@ var (
 	clientSeconds      *prometheus.CounterVec
 )
 
-func InitPrometheus(prometheusHost, prometheusPort, prometheusEntry string) {
+func InitPrometheus(prometheusHost string, prometheusPort uint16, prometheusEntry string) {
 	pq = NewUpdatablePriorityQueue()
 	totalClients = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -95,11 +96,11 @@ func InitPrometheus(prometheusHost, prometheusPort, prometheusEntry string) {
 			glog.Infof("Starting Prometheus on Unix socket %v, entry point is /%v", socketPath, prometheusEntry)
 			serveOnUnixSocket(socketPath)
 		} else {
-			ipPort := prometheusHost+":"+prometheusPort
+			ipPort := prometheusHost + ":" + strconv.FormatUint(uint64(prometheusPort), 10)
 			glog.Infof("Starting Prometheus on IP port %v, entry point is /%v", ipPort, prometheusEntry)
 			serveOnIpPort(ipPort)
 		}
-		
+
 	}()
 }
 
@@ -138,7 +139,7 @@ type RecordEntry struct {
 	BytesSent         int
 }
 
-func StartRecording(maxClients int64, prometheusEnabled bool, prometheusCleanUnseenSeconds int, geoOption geoip.GeoOption) chan RecordEntry {
+func StartRecording(maxClients int64, prometheusEnabled bool, prometheusCleanUnseen time.Duration, geoOption geoip.GeoOption) chan RecordEntry {
 	records := make(chan RecordEntry, maxClients)
 	go func() {
 		for {
@@ -181,7 +182,7 @@ func StartRecording(maxClients int64, prometheusEnabled bool, prometheusCleanUns
 				pq.Update(r.IpAddr, time.Now())
 			case RecordEntryTypeClean:
 				top := pq.Peek()
-				deadline := time.Now().Add(-time.Second * time.Duration(prometheusCleanUnseenSeconds))
+				deadline := time.Now().Add(-prometheusCleanUnseen)
 				for top != nil && top.Value.Before(deadline) {
 					clientIP.DeletePartialMatch(prometheus.Labels{"ip": top.Key})
 					clientSeconds.DeletePartialMatch(prometheus.Labels{"ip": top.Key})

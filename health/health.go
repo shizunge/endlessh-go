@@ -28,8 +28,6 @@ import (
 )
 
 const (
-	DefaultHost    = "127.0.0.1"
-	DefaultPort    = "51000"
 	DefaultPath    = "/health"
 	DefaultTimeout = 3 * time.Second
 )
@@ -87,27 +85,27 @@ func Probe(host, port string) bool {
 }
 
 // SetupHealthcheck probes or starts the healthcheck listener as configured.
-func SetupHealthcheck(healthcheck bool, healthcheckEnabled bool, connType string, healthcheckHost, healthcheckPort *string) {
+func SetupHealthcheck(healthcheck bool, healthcheckEnabled bool, connType, healthcheckHost string, healthcheckPort uint16) {
 	if healthcheck {
-		if !Probe(*healthcheckHost, *healthcheckPort) {
+		if !Probe(healthcheckHost, strconv.FormatUint(uint64(healthcheckPort), 10)) {
 			os.Exit(1)
 		}
 		os.Exit(0)
 	}
 
 	if healthcheckEnabled {
-		if connType == "tcp6" && *healthcheckHost == "0.0.0.0" {
-			*healthcheckHost = "[::]"
+		if connType == "tcp6" && healthcheckHost == "0.0.0.0" {
+			healthcheckHost = "[::]"
 		}
-		if *healthcheckPort == "0" || *healthcheckPort == "" {
-			l, err := net.Listen("tcp", *healthcheckHost+":0")
+		if healthcheckPort == 0 {
+			l, err := net.Listen("tcp", healthcheckHost+":0")
 			if err != nil {
 				glog.Fatalf("Failed to pick a free healthcheck port: %v", err)
 			}
 			actualPort := l.Addr().(*net.TCPAddr).Port
-			*healthcheckPort = strconv.Itoa(actualPort)
+			healthcheckPort = uint16(actualPort)
 			l.Close()
 		}
-		StartListener(*healthcheckHost, *healthcheckPort)
+		StartListener(healthcheckHost, strconv.FormatUint(uint64(healthcheckPort), 10))
 	}
 }

@@ -40,7 +40,7 @@ Then you can try to connect to the endlessh server. Your SSH client should hang 
 ssh -p 2222 localhost
 ```
 
-If you want log like the [C implementation](https://github.com/skeeto/endlessh), you need to set both CLI arguments `-logtostderr` and `-v=1`, then the log will go to stderr. You can set different log destinations via CLI arguments.
+If you want log like the [C implementation](https://github.com/skeeto/endlessh), you need to enable logging to stderr at verbosity 1: set both CLI arguments `-logtostderr` and `-v=1`, or the environment variables `ENDLESSH_LOGGING_LOG_TO_STDERR=true` and `ENDLESSH_LOGGING_VERBOSITY=1`, or `log_to_stderr = true` and `verbosity = 1` under `[logging]` in the configuration file. You can set different log destinations via CLI arguments.
 
 Also check out [examples](./examples/README.md) for the setup of the full stack.
 
@@ -49,66 +49,98 @@ Also check out [examples](./examples/README.md) for the setup of the full stack.
 `./endlessh-go --help`
 
 ```
-Usage of ./endlessh-go
-  -alsologtostderr
-        log to standard error as well as files
-  -conn_type string
-        Connection type. Possible values are tcp, tcp4, tcp6 (default "tcp")
-  -enable_prometheus
-        Enable prometheus (deprecated, use prometheus_enabled)
-  -geoip_supplier string
-        Supplier to obtain Geohash of IPs. Possible values are "off", "ip-api", "max-mind-db" (default "off")
-  -healthcheck
-        Perform healthcheck and exit. GET healthcheck_host:healthcheck_port/health and exit 1 if status is not ok or timeout is exceeded.
-  -healthcheck_enabled
-        Enable healthcheck
-  -healthcheck_host string
-        The address for healthcheck. (default "127.0.0.1")
-  -healthcheck_port string
-        HTTP port for healthcheck; Serves JSON with status and uptime at /health. (default "51000")
-  -host string
-        SSH listening address (default "0.0.0.0")
-  -interval_ms int
-        Message millisecond delay (default 1000)
-  -line_length int
-        Maximum banner line length (default 32)
-  -log_backtrace_at value
-        when logging hits line file:N, emit a stack trace
-  -log_dir string
-        If non-empty, write log files in this directory
-  -log_link string
-        If non-empty, add symbolic links in this directory to the log files
-  -logbuflevel int
-        Buffer log messages logged at this level or lower (-1 means don't buffer; 0 means buffer INFO only; ...). Has limited applicability on non-prod platforms.
-  -logtostderr
-        log to standard error instead of files
-  -max_clients int
-        Maximum number of clients (default 4096)
-  -max_mind_db string
-        Path to the MaxMind DB file.
-  -port value
-        SSH listening port. You may provide multiple -port flags to listen to multiple ports. (default "2222")
-  -prometheus_clean_unseen_seconds int
-        Remove series if the IP is not seen for the given time. Set to 0 to disable. (default 0)
-  -prometheus_enabled
-        Enable prometheus
-  -prometheus_entry string
-        Entry point for prometheus (default "metrics")
-  -prometheus_host string
-        The address for prometheus (default "0.0.0.0")
-  -prometheus_port string
-        The port for prometheus (default "2112")
-  -proxy_protocol_enabled
-        Enable PROXY protocol support. This causes the server to expect PROXY protocol headers on incoming connections.
-  -proxy_protocol_read_header_timeout_ms int
-        Timeout for reading the PROXY protocol header in milliseconds. If the connection does not send a valid PROXY protocol header in this time, the header is ignored. (default 200)
-  -stderrthreshold value
-        logs at or above this threshold go to stderr (default 2)
-  -v value
-        log level for V logs
-  -vmodule value
-        comma-separated list of pattern=N settings for file-filtered logging
+NAME:
+   endlessh-go - A golang implementation of endlessh (SSH tarpit) exporting Prometheus metrics, visualized by a Grafana dashboard
+
+USAGE:
+   endlessh-go [global options]
+
+AUTHOR:
+   Shizun Ge
+
+GLOBAL OPTIONS:
+   --config_path string         Path to a TOML configuration file. Values in the file are overridden by environment variables and command-line flags. (default: "$HOME/.config/endlessh/config.toml") [$ENDLESSH_CONFIG_PATH]
+   --conn_type string           Connection type. Possible values are tcp, tcp4, tcp6 (default: "tcp") [$ENDLESSH_CONNECTION_TYPE]
+   --help, -h                   show help
+   --host string                SSH listening address (default: "0.0.0.0") [$ENDLESSH_HOST_ADDRESS]
+   --interval duration          Message delay (default: 1s) [$ENDLESSH_INTERVAL]
+   --interval_ms int            Message millisecond delay (deprecated, use --interval instead)
+   --line_length int            Maximum banner line length (default: 32) [$ENDLESSH_LINE_LENGTH]
+   --max_clients int            Maximum number of clients (default: 4096) [$ENDLESSH_MAX_CLIENTS]
+   --port uint [ --port uint ]  SSH listening port. You may provide multiple -port flags to listen to multiple ports. (default: 2222) [$ENDLESSH_LISTEN_PORT]
+
+   GeoIP
+
+   --geoip_supplier string  Supplier to obtain Geohash of IPs. Possible values are "off", "ip-api", "max-mind-db" (default: "off") [$ENDLESSH_GEOIP_SUPPLIER]
+   --max_mind_db string     Path to the MaxMind DB file. [$ENDLESSH_MAX_MIND_DB]
+
+   Healthcheck
+
+   --healthcheck              Perform healthcheck and exit. GET healthcheck_host:healthcheck_port/health and exit 1 if status is not ok or timeout is exceeded.
+   --healthcheck_enabled      Enable healthcheck [$ENDLESSH_HEALTHCHECK_ENABLED]
+   --healthcheck_host string  The address for healthcheck. (default: "127.0.0.1") [$ENDLESSH_HEALTHCHECK_HOST]
+   --healthcheck_port uint    HTTP port for healthcheck; Serves JSON with status and uptime at /health. (default: 51000) [$ENDLESSH_HEALTHCHECK_PORT]
+
+   Logging
+
+   --alsologtostderr            log to standard error as well as files [$ENDLESSH_LOGGING_ALSO_LOG_TO_STDERR]
+   --log_backtrace_at FILE:N    when logging hits line file:N, emit a stack trace (FILE:N)
+   --log_dir DIR                If non-empty, write log files in this directory (DIR) [$ENDLESSH_LOGGING_LOG_DIR]
+   --log_link DIR               If non-empty, add symbolic links in this directory to the log files (DIR) [$ENDLESSH_LOGGING_LOG_LINK]
+   --logbuflevel LEVEL          Buffer log messages logged at this level or lower (-1 means don't buffer; 0 means buffer INFO only; ...). Has limited applicability on non-prod platforms. (LEVEL) (default: 0)
+   --logtostderr                log to standard error instead of files [$ENDLESSH_LOGGING_LOG_TO_STDERR]
+   --stderrthreshold SEVERITY   logs at or above this threshold go to stderr (SEVERITY) (default: 2) [$ENDLESSH_LOGGING_STDERR_THRESHOLD]
+   --verbosity LEVEL, -v LEVEL  log level for V logs (LEVEL) (default: 0) [$ENDLESSH_LOGGING_VERBOSITY]
+   --vmodule PATTERN=N          comma-separated list of pattern=N settings for file-filtered logging (PATTERN=N)
+
+   PROXY protocol
+
+   --proxy_protocol_enabled                       Enable PROXY protocol support. This causes the server to expect PROXY protocol headers on incoming connections. [$ENDLESSH_PROXY_PROTOCOL_ENABLED]
+   --proxy_protocol_read_header_timeout duration  Timeout for reading the PROXY protocol header. If the connection does not send a valid PROXY protocol header in this time, the header is ignored. (default: 200ms) [$ENDLESSH_PROXY_PROTOCOL_READ_HEADER_TIMEOUT]
+   --proxy_protocol_read_header_timeout_ms int    Timeout for reading the PROXY protocol header in milliseconds. If the connection does not send a valid PROXY protocol header in this time, the header is ignored. (deprecated, use --proxy_protocol_read_header_timeout instead)
+
+   Prometheus metrics
+
+   --enable_prometheus                    Enable prometheus (deprecated, use --prometheus_enabled instead)
+   --prometheus_clean_unseen duration     Remove series if the IP is not seen for the given time. Set to 0s to disable. (default: 0s) [$ENDLESSH_PROMETHEUS_CLEAN_UNSEEN]
+   --prometheus_clean_unseen_seconds int  Remove series if the IP is not seen for the given time in seconds. Set to 0 to disable. (deprecated, use --prometheus_clean_unseen instead)
+   --prometheus_enabled                   Enable prometheus [$ENDLESSH_PROMETHEUS_ENABLED]
+   --prometheus_entry string              Entry point for prometheus (default: "metrics") [$ENDLESSH_PROMETHEUS_ENTRY]
+   --prometheus_host string               The address for prometheus (default: "0.0.0.0") [$ENDLESSH_PROMETHEUS_HOST]
+   --prometheus_port uint                 The port for prometheus (default: 2112) [$ENDLESSH_PROMETHEUS_PORT]
+
 ```
+
+## Configuration
+
+Besides command-line flags, the program can be configured with environment variables and with a TOML file. Values are resolved in this order, with the first match winning:
+
+1. command-line flags,
+2. the `ENDLESSH_*` environment variables (shown for each flag in `--help`),
+3. the configuration file,
+4. the built-in defaults.
+
+### Configuration file
+
+`--config_path` selects the file. When it is not set, the default location is `${XDG_CONFIG_HOME}/endlessh/config.toml`, falling back to `$HOME/.config/endlessh/config.toml` when `XDG_CONFIG_HOME` is unset or empty. The path may contain `~` and `$VAR` / `${VAR}` / `${VAR:-default}` references, so `--config_path '${XDG_CONFIG_HOME}/endlessh/config.toml'` works too. See [`examples/config.toml`](./examples/config.toml) for a complete example.
+
+The deprecated flags `--interval_ms`, `--prometheus_enabled`/`--enable_prometheus`, `--prometheus_clean_unseen_seconds` and `--proxy_protocol_read_header_timeout_ms` still work but print a warning; use their replacements above. The deprecated flags cannot be combined with their replacement in the same invocation.
+
+### Logging
+
+Logging is provided by [glog](https://github.com/golang/glog). Its `--logtostderr`, `--alsologtostderr`, `--stderrthreshold`, `--log_dir`, `--log_link` and `--verbosity` flags can also be set from the environment and the configuration file, using the names shown in `--help`. They follow the same precedence as the other settings.
+
+| Command-line flag   | Environment variable                  | Configuration file key       |
+|---------------------|---------------------------------------|------------------------------|
+| `--verbosity`, `-v` | `ENDLESSH_LOGGING_VERBOSITY`          | `logging.verbosity`          |
+| `--logtostderr`     | `ENDLESSH_LOGGING_LOG_TO_STDERR`      | `logging.log_to_stderr`      |
+| `--alsologtostderr` | `ENDLESSH_LOGGING_ALSO_LOG_TO_STDERR` | `logging.also_log_to_stderr` |
+| `--stderrthreshold` | `ENDLESSH_LOGGING_STDERR_THRESHOLD`   | `logging.stderr_threshold`   |
+| `--log_dir`         | `ENDLESSH_LOGGING_LOG_DIR`            | `logging.log_dir`            |
+| `--log_link`        | `ENDLESSH_LOGGING_LOG_LINK`           | `logging.log_link`           |
+
+The remaining glog flags (`--vmodule`, `--log_backtrace_at` and `--logbuflevel`) are debugging aids and are only available as command-line flags. See [`examples/config.toml`](./examples/config.toml) for an example `[logging]` section.
+
 
 ## Metrics
 
