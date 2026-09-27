@@ -44,7 +44,7 @@ func TestEndlesshIntegration_MultiplePorts(t *testing.T) {
 		ln.Close()
 	}
 	args := []string{"run", "main.go",
-		"-interval_ms=100",
+		"-interval=100ms",
 		"-max_clients=10",
 		"-logtostderr",
 		"-v=1",
@@ -88,7 +88,7 @@ func TestEndlesshIntegration_MultiplePorts(t *testing.T) {
 
 func TestEndlesshIntegration_TarpitBehavior(t *testing.T) {
 	var stderr bytes.Buffer
-	cmd := exec.Command("go", "run", "main.go", "-port=0", "-interval_ms=5000", "-max_clients=10", "-logtostderr", "-v=1")
+	cmd := exec.Command("go", "run", "main.go", "-port=0", "-interval=5s", "-max_clients=10", "-logtostderr", "-v=1")
 	cmd.Stderr = &stderr
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("Failed to start server: %v", err)
@@ -144,7 +144,7 @@ func TestEndlesshIntegration_TarpitBehavior(t *testing.T) {
 func TestEndlesshIntegration_Concurrency(t *testing.T) {
 	maxClients := 5
 	var stderr bytes.Buffer
-	cmd := exec.Command("go", "run", "main.go", "-port=0", "-interval_ms=1000", fmt.Sprintf("-max_clients=%d", maxClients), "-logtostderr", "-v=1")
+	cmd := exec.Command("go", "run", "main.go", "-port=0", "-interval=1s", fmt.Sprintf("-max_clients=%d", maxClients), "-logtostderr", "-v=1")
 	cmd.Stderr = &stderr
 
 	if err := cmd.Start(); err != nil {
@@ -265,7 +265,7 @@ func TestEndlesshIntegration_PrometheusMetrics(t *testing.T) {
 		"-port=0",
 		"-prometheus_enabled",
 		"-prometheus_port=0",
-		"-interval_ms=100",
+		"-interval=100ms",
 		"-logtostderr", "-v=1",
 	)
 	cmd.Stderr = &stderr
@@ -331,7 +331,7 @@ func TestEndlesshIntegration_Healthcheck(t *testing.T) {
 		"-port=0",
 		"-healthcheck_enabled",
 		"-healthcheck_port=0",
-		"-interval_ms=100",
+		"-interval=100ms",
 		"-logtostderr", "-v=1",
 	)
 	cmd.Stderr = &stderr

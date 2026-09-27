@@ -4,12 +4,12 @@ services:
     container_name: endlessh
     image: shizunge/endlessh-go:latest
     restart: always
-    command:
-      - -interval_ms=1000
-      - -logtostderr
-      - -v=1
-      - -prometheus_enabled
-      - -geoip_supplier=ip-api
+    environment:
+      - ENDLESSH_LOGGING_LOG_TO_STDERR=true
+      - ENDLESSH_LOGGING_VERBOSITY=1
+      - ENDLESSH_INTERVAL=1s
+      - ENDLESSH_PROMETHEUS_ENABLED=true
+      - ENDLESSH_GEOIP_SUPPLIER=ip-api
     networks:
       - example_network
     ports:

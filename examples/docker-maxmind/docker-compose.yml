@@ -5,11 +5,11 @@ services:
     image: shizunge/endlessh-go:latest
     restart: unless-stopped
     #user: root
-    command:
-      - "-logtostderr"
-      - "-v=1"
-      - "-geoip_supplier=max-mind-db"
-      - "-max_mind_db=/geo-data/GeoLite2-City.mmdb"
+    environment:
+      - ENDLESSH_LOGGING_LOG_TO_STDERR=true
+      - ENDLESSH_LOGGING_VERBOSITY=1
+      - ENDLESSH_GEOIP_SUPPLIER=max-mind-db
+      - ENDLESSH_MAX_MIND_DB=/geo-data/GeoLite2-City.mmdb
     networks:
       - example_network
     ports:
