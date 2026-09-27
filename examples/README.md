@@ -2,6 +2,10 @@
 
 > The default container user has uid 65534.
 
+## [toml-config](./config.toml)
+
+An example toml configuration.
+
 ## [docker-simple](./docker-simple)
 
 An example how to setup endlessh-go, Prometheus, and Grafana using [docker compose](https://docs.docker.com/compose/).

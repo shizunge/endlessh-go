@@ -40,7 +40,7 @@ Then you can try to connect to the endlessh server. Your SSH client should hang 
 ssh -p 2222 localhost
 ```
 
-If you want log like the [C implementation](https://github.com/skeeto/endlessh), you need to enable logging to stderr at verbosity 1: set both CLI arguments `-logtostderr` and `-v=1`, or the environment variables `ENDLESSH_LOGGING_LOG_TO_STDERR=true` and `ENDLESSH_LOGGING_VERBOSITY=1`, or `log_to_stderr = true` and `verbosity = 1` under `[logging]` in the configuration file. You can set different log destinations via CLI arguments.
+If you want log like the [C implementation](https://github.com/skeeto/endlessh), you need to enable logging to stderr at verbosity 1: set both CLI arguments `-logtostderr` and `-v=1`, or the equivalent environment variables.
 
 Also check out [examples](./examples/README.md) for the setup of the full stack.
 
@@ -115,10 +115,10 @@ GLOBAL OPTIONS:
 
 Besides command-line flags, the program can be configured with environment variables and with a TOML file. Values are resolved in this order, with the first match winning:
 
-1. command-line flags,
-2. the `ENDLESSH_*` environment variables (shown for each flag in `--help`),
-3. the configuration file,
-4. the built-in defaults.
+1. command-line flags
+2. environment variables (shown for each flag in `--help`)
+3. `toml` configuration file
+4. built-in defaults
 
 ### Configuration file
 
@@ -128,19 +128,7 @@ The deprecated flags `--interval_ms`, `--prometheus_enabled`/`--enable_prometheu
 
 ### Logging
 
-Logging is provided by [glog](https://github.com/golang/glog). Its `--logtostderr`, `--alsologtostderr`, `--stderrthreshold`, `--log_dir`, `--log_link` and `--verbosity` flags can also be set from the environment and the configuration file, using the names shown in `--help`. They follow the same precedence as the other settings.
-
-| Command-line flag   | Environment variable                  | Configuration file key       |
-|---------------------|---------------------------------------|------------------------------|
-| `--verbosity`, `-v` | `ENDLESSH_LOGGING_VERBOSITY`          | `logging.verbosity`          |
-| `--logtostderr`     | `ENDLESSH_LOGGING_LOG_TO_STDERR`      | `logging.log_to_stderr`      |
-| `--alsologtostderr` | `ENDLESSH_LOGGING_ALSO_LOG_TO_STDERR` | `logging.also_log_to_stderr` |
-| `--stderrthreshold` | `ENDLESSH_LOGGING_STDERR_THRESHOLD`   | `logging.stderr_threshold`   |
-| `--log_dir`         | `ENDLESSH_LOGGING_LOG_DIR`            | `logging.log_dir`            |
-| `--log_link`        | `ENDLESSH_LOGGING_LOG_LINK`           | `logging.log_link`           |
-
-The remaining glog flags (`--vmodule`, `--log_backtrace_at` and `--logbuflevel`) are debugging aids and are only available as command-line flags. See [`examples/config.toml`](./examples/config.toml) for an example `[logging]` section.
-
+Logging is provided by [glog](https://github.com/golang/glog). Its `--logtostderr`, `--alsologtostderr`, `--stderrthreshold`, `--log_dir`, `--log_link` and `--verbosity` flags can also be set from the environment and the configuration file, using the names shown in `--help`.
 
 ## Metrics
 

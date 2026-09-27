@@ -1,6 +1,6 @@
 # Example configuration for endlessh-go
 #
-# Either copy this to `~/.config/endlessh-go` or use the `--config` argument
+# Either copy this to `~/.config/endlessh-go` or use the `--config_path` argument
 
 [general]
 host = "0.0.0.0"

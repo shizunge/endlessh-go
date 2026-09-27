@@ -204,11 +204,6 @@ func action(ctx context.Context, cmd *cli.Command) error {
 
 func main() {
 	cmd := app.Command(action)
-	// urfave/cli reports usage errors and ExitCoder errors (such as the flag
-	// validators in package app) on its own, exiting for the latter. Any other
-	// error, for example a bad value from the configuration file or an
-	// environment variable, reaches this point and is printed here; otherwise
-	// it would be swallowed.
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
 		fmt.Fprintln(cmd.ErrWriter, err)
 		os.Exit(1)
