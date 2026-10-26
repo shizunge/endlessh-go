@@ -38,8 +38,8 @@ github.com/pierrre/go-libs v0.34.8 h1:Wyrzfk+qNPpHrNpd31GfaNMVEeRQVhxz3j3MfDvlVZ
 github.com/pierrre/go-libs v0.34.8/go.mod h1:EHXn0WKC53KrJiAsRjAm9eBcxNkPmzwVX6pRjnbRZuE=
 github.com/pierrre/pretty v0.26.6 h1:bL4SgdD/RkIYN58FT3ZCCQVIq8mWSYFK3wGwibyCJiI=
 github.com/pierrre/pretty v0.26.6/go.mod h1:g79mEtZ7k4rPdPjqWa2pMVMYEOoU80VwJomZRtiIqfw=
-github.com/pires/go-proxyproto v0.15.0 h1:dTshmNbFm/D+0+sbrxUuddPOZ5Y0B7c5NhtsBkm6LqI=
-github.com/pires/go-proxyproto v0.15.0/go.mod h1:OXsCrKwrK2tXS9YrI5tkHx5xaQlO8FH3lFW76orFh24=
+github.com/pires/go-proxyproto v0.16.0 h1:9KYT/fM3wpjT8bdMEj/7FBcoiUG1KyzEjRYnPu+vz7A=
+github.com/pires/go-proxyproto v0.16.0/go.mod h1:n7yhg8yIfNl3KgYDCwBzmeUHNpKTVnUhcWpc7rV4RW4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/prometheus/client_golang v1.24.1 h1:JnJkREXzWxUdCuPFpIWZiPispT9xVV59uiuyR2bPlnU=
