@@ -8,6 +8,7 @@ services:
     command:
       - "-logtostderr"
       - "-v=1"
+      - "-healthcheck_enabled"
       - "-geoip_supplier=max-mind-db"
       - "-max_mind_db=/geo-data/GeoLite2-City.mmdb"
     networks:

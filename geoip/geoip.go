@@ -19,10 +19,11 @@ package geoip
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/oschwald/geoip2-golang"
 	"github.com/pierrre/geohash"
@@ -68,21 +69,20 @@ type ipapi struct {
 	Longitude   float64 `json:"lon"`
 }
 
+var ipAPIClient = &http.Client{Timeout: 3 * time.Second}
+
 func geohashAndLocationFromIpapi(ipAddr string) (string, string, string, error) {
 	var geo ipapi
-	response, err := http.Get("http://ip-api.com/json/" + ipAddr)
+	response, err := ipAPIClient.Get("http://ip-api.com/json/" + ipAddr)
 	if err != nil {
 		return "s000", "Unknown", "Unknown", err
 	}
 	defer response.Body.Close()
-
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return "s000", "Unknown", "Unknown", err
+	if response.StatusCode != http.StatusOK {
+		return "s000", "Unknown", "Unknown", fmt.Errorf("ip-api returned HTTP %d", response.StatusCode)
 	}
 
-	err = json.Unmarshal(body, &geo)
-	if err != nil {
+	if err := json.NewDecoder(io.LimitReader(response.Body, 1<<20)).Decode(&geo); err != nil {
 		return "s000", "Unknown", "Unknown", err
 	}
 
