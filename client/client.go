@@ -33,7 +33,7 @@ var (
 
 func randStringBytes(n int64) []byte {
 	b := make([]byte, n+1)
-	for i := range b {
+	for i := int64(0); i < n; i++ {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
 	b[n] = '\n'
@@ -41,45 +41,42 @@ func randStringBytes(n int64) []byte {
 }
 
 type Client struct {
-	conn      net.Conn
-	next      time.Time
-	start     time.Time
-	last      time.Time
-	interval  time.Duration
-	bytesSent int
+	conn         net.Conn
+	next         time.Time
+	start        time.Time
+	last         time.Time
+	interval     time.Duration
+	writeTimeout time.Duration
+	bytesSent    int
 }
 
+// NewClient returns nil when the concurrent client limit has been reached.
 func NewClient(conn net.Conn, interval time.Duration, maxClients int64) *Client {
-	for numCurrentClients >= maxClients {
-		time.Sleep(interval)
-	}
-	atomic.AddInt64(&numCurrentClients, 1)
-	// Enable TCP keepalive to detect dead peers at the kernel level.
-	// This is a safety net for long intervals where the write deadline
-	// alone would be too slow to detect dead connections. For example,
-	// with interval=10min, without keepalive a ghost connection would
-	// go undetected for 10+ minutes.
-	// Keepalive cannot detect peers that are alive at the TCP level
-	// (kernel still responds to probes) but stalled at the application
-	// level — the write deadline in Send() covers that case.
-	// Detection time: ~idle + 9 probes (e.g. 10s + 9×10s ≈ 100s on Linux).
-	if tcpConn, ok := conn.(*net.TCPConn); ok {
-		tcpConn.SetKeepAlive(true)
-		keepalive := interval
-		if keepalive > 30*time.Second {
-			keepalive = 30 * time.Second
+	for {
+		current := atomic.LoadInt64(&numCurrentClients)
+		if current >= maxClients {
+			return nil
 		}
-		tcpConn.SetKeepAlivePeriod(keepalive)
+		if atomic.CompareAndSwapInt64(&numCurrentClients, current, current+1) {
+			break
+		}
 	}
 	addr := conn.RemoteAddr().(*net.TCPAddr)
-	glog.V(1).Infof("ACCEPT host=%v port=%v n=%v/%v\n", addr.IP, addr.Port, numCurrentClients, maxClients)
+	glog.V(1).Infof("ACCEPT host=%v port=%v n=%v/%v\n", addr.IP, addr.Port, atomic.LoadInt64(&numCurrentClients), maxClients)
 	return &Client{
-		conn:      conn,
-		next:      time.Now().Add(interval),
-		start:     time.Now(),
-		last:      time.Now(),
-		interval:  interval,
-		bytesSent: 0,
+		conn:         conn,
+		next:         time.Now().Add(interval),
+		start:        time.Now(),
+		last:         time.Now(),
+		interval:     interval,
+		writeTimeout: 5 * time.Second,
+		bytesSent:    0,
+	}
+}
+
+func (c *Client) SetWriteTimeout(timeout time.Duration) {
+	if timeout > 0 {
+		c.writeTimeout = timeout
 	}
 }
 
@@ -97,10 +94,18 @@ func (c *Client) Send(bannerMaxLength int64) (int, error) {
 	}
 	c.next = time.Now().Add(c.interval)
 	length := rand.Int63n(bannerMaxLength)
-	// Set a write deadline to detect dead connections where the kernel
-	// buffers data but the remote peer is gone. Without this, Write()
-	// can succeed indefinitely on dead connections, causing goroutine leaks.
-	c.conn.SetWriteDeadline(time.Now().Add(c.interval))
+	// Bound writes when a peer stops reading and the send buffer fills.
+	// Linux TCP_USER_TIMEOUT covers data left unacknowledged in the buffer.
+	writeTimeout := c.interval
+	if writeTimeout < 100*time.Millisecond {
+		writeTimeout = 100 * time.Millisecond
+	}
+	if c.writeTimeout < writeTimeout {
+		writeTimeout = c.writeTimeout
+	}
+	if err := c.conn.SetWriteDeadline(time.Now().Add(writeTimeout)); err != nil {
+		return 0, err
+	}
 	bytesSent, err := c.conn.Write(randStringBytes(length))
 	if err != nil {
 		return 0, err

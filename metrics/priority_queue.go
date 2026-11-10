@@ -43,6 +43,7 @@ func (pq *PriorityQueue) Pop() interface{} {
 	n := len(old)
 	pair := old[n-1]
 	pair.HeapIdx = -1 // for safety
+	old[n-1] = nil    // release the removed pair from the heap's backing array
 	*pq = old[0 : n-1]
 	return pair
 }
@@ -81,6 +82,15 @@ func (ds *UpdatablePriorityQueue) Peek() *Pair {
 		return nil
 	}
 	return ds.pq[0]
+}
+
+func (ds *UpdatablePriorityQueue) Len() int {
+	return ds.pq.Len()
+}
+
+func (ds *UpdatablePriorityQueue) Contains(key string) bool {
+	_, ok := ds.keyMap[key]
+	return ok
 }
 
 // Pop removes the entry with the minimal time

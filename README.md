@@ -2,9 +2,9 @@
 
 [![Release](https://img.shields.io/github/release/shizunge/endlessh-go.svg?label=Release)](https://github.com/shizunge/endlessh-go/releases/latest)
 [![License](https://img.shields.io/badge/License-GPLv3-blue)](https://github.com/shizunge/endlessh-go/blob/main/LICENSE)
-[![Image Size](https://img.shields.io/docker/image-size/shizunge/endlessh-go/latest.svg?label=Image%20Size)](https://hub.docker.com/r/shizunge/endlessh-go)
-[![Docker Pulls](https://img.shields.io/docker/pulls/shizunge/endlessh-go.svg?label=Docker%20Pulls&logo=Docker)](https://hub.docker.com/r/shizunge/endlessh-go)
-[![Build](https://img.shields.io/github/actions/workflow/status/shizunge/endlessh-go/on-push.yml?label=Build&branch=main&logo=GitHub)](https://github.com/shizunge/endlessh-go/actions/workflows/on-push.yml)
+[![Image Size](https://img.shields.io/docker/image-size/dalbodeule/endlessh-go/latest.svg?label=Image%20Size)](https://hub.docker.com/r/dalbodeule/endlessh-go)
+[![Docker Pulls](https://img.shields.io/docker/pulls/dalbodeule/endlessh-go.svg?label=Docker%20Pulls&logo=Docker)](https://hub.docker.com/r/dalbodeule/endlessh-go)
+[![Build](https://img.shields.io/github/actions/workflow/status/dalbodeule/endlessh-go/on-push.yml?label=Build&branch=main&logo=GitHub)](https://github.com/dalbodeule/endlessh-go/actions/workflows/on-push.yml)
 [![CodeFactor Grade](https://img.shields.io/codefactor/grade/github/shizunge/endlessh-go?label=CodeFactor&logo=CodeFactor)](https://www.codefactor.io/repository/github/shizunge/endlessh-go)
 
 A golang implementation of [endlessh](https://nullprogram.com/blog/2019/03/22/) exporting Prometheus metrics, visualized by a Grafana dashboard.
@@ -15,7 +15,7 @@ A golang implementation of [endlessh](https://nullprogram.com/blog/2019/03/22/) 
 
 [Endlessh](https://nullprogram.com/blog/2019/03/22/) is a great idea that not only blocks the brute force SSH attacks, but also wastes attackers time as a kind of counter-attack. Besides trapping the attackers, I also want to visualize the Geolocations and other statistics of the sources of attacks. Unfortunately the wonderful original [C implementation of endlessh](https://github.com/skeeto/endlessh) only provides text based log, but I do not like the solution that writes extra scripts to parse the log outputs, then exports the results to a dashboard, because it would introduce extra layers in my current setup and it would depend on the format of the text log file rather than some structured data. Thus I create this golang implementation of endlessh to export [Prometheus](https://prometheus.io/) metrics and a [Grafana](https://grafana.com/) dashboard to visualize them.
 
-If you want a dashboard of sources of attacks and do not mind the endlessh server, besides trapping the attackers, does extra things including: translating IP to Geohash, exporting Prometheus metrics, and using more memory (about 10MB), this is the solution for you.
+If you want a dashboard of attack sources, the server can also translate IP addresses to geohashes and export Prometheus metrics. These options use additional memory; the amount depends on how many IPs and ports are tracked.
 
 ## Getting Started
 
@@ -89,13 +89,15 @@ Usage of ./endlessh-go
   -port value
         SSH listening port. You may provide multiple -port flags to listen to multiple ports. (default "2222")
   -prometheus_clean_unseen_seconds int
-        Remove series if the IP is not seen for the given time. Set to 0 to disable. (default 0)
+        Remove per-IP series if the IP is not seen for the given number of seconds. Set to 0 to disable. (default 3600)
   -prometheus_enabled
         Enable prometheus
   -prometheus_entry string
         Entry point for prometheus (default "metrics")
   -prometheus_host string
         The address for prometheus (default "0.0.0.0")
+  -prometheus_max_tracked_ips int
+        Maximum number of IPs retained in per-IP Prometheus metrics (default 10000)
   -prometheus_port string
         The port for prometheus (default "2112")
   -proxy_protocol_enabled
@@ -104,11 +106,29 @@ Usage of ./endlessh-go
         Timeout for reading the PROXY protocol header in milliseconds. If the connection does not send a valid PROXY protocol header in this time, the header is ignored. (default 200)
   -stderrthreshold value
         logs at or above this threshold go to stderr (default 2)
+  -tcp_keepalive_count int
+        Number of unanswered TCP keepalive probes before closing (default 3)
+  -tcp_keepalive_idle_seconds int
+        Seconds of TCP inactivity before the first keepalive probe (default 30)
+  -tcp_keepalive_interval_seconds int
+        Seconds between TCP keepalive probes (default 10)
+  -tcp_read_buffer_bytes int
+        TCP receive buffer size in bytes; 0 uses the system default (default 16384)
+  -tcp_user_timeout_ms int
+        Linux: maximum milliseconds of unacknowledged TCP data; 0 uses the system default (default 60000)
+  -tcp_write_buffer_bytes int
+        TCP send buffer size in bytes; 0 uses the system default (default 16384)
+  -tcp_write_timeout_ms int
+        Maximum milliseconds a TCP write may wait for a slow peer (default 5000)
   -v value
         log level for V logs
   -vmodule value
         comma-separated list of pattern=N settings for file-filtered logging
 ```
+
+## TCP sockets
+
+The SSH tarpit uses TCP keepalive on every accepted connection, including connections received through the PROXY protocol. The defaults start probing after 30 seconds of inactivity, then send up to three probes 10 seconds apart. The receive and send buffers are requested at 16 KiB each to limit kernel memory held by clients that do not read or that send excessive data; the operating system may adjust the actual sizes. On Linux, `TCP_USER_TIMEOUT` is set to 60 seconds so unacknowledged or unsent data cannot keep a dead connection open for the system's much longer default timeout ([Linux tcp(7)](https://man7.org/linux/man-pages/man7/tcp.7.html)). Set `-tcp_user_timeout_ms=0` to use the Linux system default. This option has no effect on other operating systems. TCP sockets already use Go's nonblocking network poller and have `TCP_NODELAY` enabled by default. Each write is also capped by `-tcp_write_timeout_ms` when the banner interval is longer than that timeout. These settings apply only to the SSH tarpit listener, not the HTTP healthcheck or Prometheus listeners.
 
 ## Metrics
 
@@ -126,6 +146,8 @@ Endlessh-go exports the following Prometheus metrics.
 The metrics is off by default, you can turn it via the CLI argument `-prometheus_enabled`.
 
 It listens to port `2112` and entry point is `/metrics` by default. The port and entry point can be changed via CLI arguments.
+
+Per-IP metrics are removed after one hour without activity by default. The `-prometheus_clean_unseen_seconds` flag controls that period, and `-prometheus_max_tracked_ips` caps the number of IPs retained at 10,000 by default. When the cap is reached, the oldest IP's per-IP series are removed; aggregate counters remain available. GeoIP results are reused while an IP remains tracked. External GeoIP lookups run in a bounded worker pool so they cannot block connection and aggregate metric recording. Per-IP metrics appear once lookup finishes; if the lookup queue is full, the IP is recorded with unknown location.
 
 The endlessh-go server stores the geohash of attackers as a label on `endlessh_client_open_count`, which is also off by default. You can turn it on via the CLI argument `-geoip_supplier`. The endlessh-go uses service from [ip-api](https://ip-api.com/), which may enforce a query rate and limit commercial use. Visit their website for their terms and policies.
 
@@ -146,7 +168,7 @@ The endlessh-go server exposes an HTTP health endpoint when the `-healthcheck_en
 
 `uptime` is the number of seconds since the server started. The host and port can be changed via `-healthcheck_host` and `-healthcheck_port`.
 
-The [docker image](https://hub.docker.com/r/shizunge/endlessh-go) includes a built-in `HEALTHCHECK` that runs every 30 seconds.
+The [docker image](https://hub.docker.com/r/shizunge/endlessh-go) includes a built-in `HEALTHCHECK` that runs `/endlessh -healthcheck` every 30 seconds. No shell, curl, or wget is needed. If you override the image's default `CMD` in Docker Compose or `docker run`, include `-healthcheck_enabled` in the new command. The health endpoint is bound to loopback by default, so it is available to the built-in check inside the container without exposing port 51000 on the host. If you change `-healthcheck_port`, also override the Docker healthcheck command with the same port, for example `test: ["CMD", "/endlessh", "-healthcheck", "-healthcheck_port=50000"]` in Compose.
 
 ## Dashboard
 

@@ -18,10 +18,10 @@ package health
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/golang/glog"
@@ -41,18 +41,33 @@ type response struct {
 
 var startTime time.Time
 
-func StartListener(host, port string) {
-	startTime = time.Now()
+func StartListener(host, port string) (string, error) {
 	mux := http.NewServeMux()
 	mux.HandleFunc(DefaultPath, handleHealth)
 	addr := net.JoinHostPort(host, port)
+	l, err := net.Listen("tcp", addr)
+	if err != nil {
+		return "", err
+	}
+	startTime = time.Now()
+	actualPort := l.Addr().(*net.TCPAddr).Port
+	server := &http.Server{
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       30 * time.Second,
+		MaxHeaderBytes:    8 << 10,
+	}
+	actualAddr := net.JoinHostPort(host, fmt.Sprint(actualPort))
+	glog.Infof("Starting healthcheck on http://%v%v", actualAddr, DefaultPath)
 	go func() {
-		glog.Infof("Starting healthcheck on http://%v%v", addr, DefaultPath)
-		if err := http.ListenAndServe(addr, mux); err != nil {
-			glog.Errorf("Error listening for healthcheck on %v: %v", addr, err)
+		if err := server.Serve(l); err != nil && err != http.ErrServerClosed {
+			glog.Errorf("Error serving healthcheck on %v: %v", actualAddr, err)
 			os.Exit(1)
 		}
 	}()
+	return fmt.Sprint(actualPort), nil
 }
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {
@@ -97,17 +112,15 @@ func SetupHealthcheck(healthcheck bool, healthcheckEnabled bool, connType string
 
 	if healthcheckEnabled {
 		if connType == "tcp6" && *healthcheckHost == "0.0.0.0" {
-			*healthcheckHost = "[::]"
+			*healthcheckHost = "::"
 		}
-		if *healthcheckPort == "0" || *healthcheckPort == "" {
-			l, err := net.Listen("tcp", *healthcheckHost+":0")
-			if err != nil {
-				glog.Fatalf("Failed to pick a free healthcheck port: %v", err)
-			}
-			actualPort := l.Addr().(*net.TCPAddr).Port
-			*healthcheckPort = strconv.Itoa(actualPort)
-			l.Close()
+		if *healthcheckPort == "" {
+			*healthcheckPort = "0"
 		}
-		StartListener(*healthcheckHost, *healthcheckPort)
+		actualPort, err := StartListener(*healthcheckHost, *healthcheckPort)
+		if err != nil {
+			glog.Fatalf("Failed to start healthcheck listener: %v", err)
+		}
+		*healthcheckPort = actualPort
 	}
 }
